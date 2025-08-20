@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: cuttlefish-backend
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.api.main
+    plan: starter  # Change to 'standard' for production
+    region: oregon  # Change as needed
+    branch: main    # Change to your deployment branch
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: PORT
+        value: 8000
+      - key: HOST
+        value: 0.0.0.0
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      # OpenAI API Key (set this in Render dashboard)
+      - key: OPENAI_API_KEY
+        sync: false  # This should be set in Render dashboard as secret
+      # Authentication settings
+      - key: BYPASS_AUTH
+        value: true  # Set to 'false' for production with authentication
+      - key: SECRET_KEY
+        generateValue: true  # Render will auto-generate
+      - key: JWT_SECRET_KEY
+        generateValue: true  # Render will auto-generate
+      # Database
+      - key: DATABASE_URL
+        sync: false  # Set in dashboard if using external DB
+      # GCP Configuration for LogSearch
+      - key: GOOGLE_CLOUD_PROJECT
+        value: octopus-282815
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false  # Set this as JSON string in Render dashboard
+      # Supabase Configuration (if needed)
+      - key: SUPABASE_URL
+        sync: false  # Set in dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false  # Set in dashboard
+      # Web Search API
+      - key: TAVILY_API_KEY
+        sync: false  # Set in dashboard
+      # Production settings
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: "*"  # Restrict in production
+    healthCheckPath: /health

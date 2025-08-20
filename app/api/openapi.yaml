@@ -1,0 +1,586 @@
+openapi: 3.0.3
+info:
+  title: Cuttlefish Multi-Agent RAG API
+  description: |
+    Intelligent JIRA ticket retrieval using multi-agent RAG system.
+    
+    This API provides intelligent search and retrieval capabilities for JIRA tickets using a multi-agent system that:
+    - Routes queries to appropriate retrieval agents based on query characteristics
+    - Performs specialized retrieval using different methods (BM25, Vector, Hybrid)
+    - Generates contextual responses using retrieved information
+    
+    ## Features
+    - **Multi-Agent Routing**: Intelligent query routing to specialized agents
+    - **Multiple Retrieval Methods**: BM25, Vector similarity, and Hybrid search
+    - **Production Incident Handling**: Urgent response for critical issues
+    - **Comprehensive Analysis**: Detailed retrieval metadata and reasoning
+    
+    ## Agents
+    - **Supervisor Agent**: Routes queries to appropriate retrieval agents
+    - **BM25 Agent**: Keyword-based search for exact matches
+    - **Contextual Compression Agent**: Semantic search with content compression
+    - **Ensemble Agent**: Combines multiple retrieval methods
+    - **Response Writer Agent**: Generates final responses
+    
+  version: 1.0.0
+  contact:
+    name: Cuttlefish4 Development Team
+    email: support@cuttlefish4.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.cuttlefish4.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: |
+        Check the health status of the API service.
+        Returns service status, version, and agent configuration information.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                service: "Cuttlefish3 Multi-Agent RAG"
+                version: "1.0.0"
+                timestamp: "2025-08-15T14:30:47.597Z"
+                agents:
+                  supervisor: "GPT-4o"
+                  response_writer: "GPT-4o"
+        '500':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /multiagent-rag:
+    post:
+      summary: Multi-Agent RAG Query Processing
+      description: |
+        Process queries through the multi-agent RAG system for intelligent JIRA ticket retrieval.
+        
+        The system will:
+        1. Analyze the query and determine the best retrieval strategy
+        2. Route to appropriate agents based on query characteristics
+        3. Perform specialized retrieval using selected methods
+        4. Generate a comprehensive response with relevant tickets
+        
+        ## Query Types
+        - **Production Incidents**: Urgent queries that get priority processing
+        - **Comprehensive Analysis**: Detailed queries when user can wait
+        - **Specific Tickets**: Queries referencing specific JIRA ticket numbers
+        - **General Queries**: Standard queries for general information
+      tags:
+        - RAG
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiAgentRAGRequest'
+            examples:
+              production_incident:
+                summary: Production Incident Query
+                value:
+                  query: "database connection timeout causing login failures"
+                  user_can_wait: false
+                  production_incident: true
+                  openai_api_key: null
+              comprehensive_analysis:
+                summary: Comprehensive Analysis Query
+                value:
+                  query: "authentication error patterns in recent tickets"
+                  user_can_wait: true
+                  production_incident: false
+                  openai_api_key: null
+              specific_ticket:
+                summary: Specific Ticket Query
+                value:
+                  query: "HBASE-12345 connection timeout issue details"
+                  user_can_wait: false
+                  production_incident: false
+                  openai_api_key: null
+              general_query:
+                summary: General Query
+                value:
+                  query: "Java OutOfMemoryError troubleshooting"
+                  user_can_wait: false
+                  production_incident: false
+                  openai_api_key: null
+      responses:
+        '200':
+          description: Query processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiAgentRAGResponse'
+              example:
+                query: "authentication error in login system"
+                final_answer: "Based on the retrieved JIRA tickets, authentication errors in the login system are typically caused by..."
+                relevant_tickets:
+                  - key: "JBIDE-15832"
+                    title: "Unable to create SSH session due to authentication failure"
+                  - key: "JBIDE-15375"
+                    title: "File permissions for OpenShift actions hooks are sometimes incorrect"
+                routing_decision: "ContextualCompression"
+                routing_reasoning: "This is a general technical query that requires semantic understanding and content compression for efficient retrieval."
+                retrieval_method: "supabase_vector_fallback"
+                retrieved_contexts:
+                  - content: "Authentication error occurred during login process..."
+                    metadata:
+                      key: "JBIDE-15832"
+                      title: "SSH Authentication Issue"
+                    source: "bugs"
+                    score: 0.85
+                retrieval_metadata:
+                  agent: "ContextualCompression"
+                  num_results: 3
+                  processing_time: 2.34
+                  method_type: "vector_similarity"
+                timestamp: "2025-08-15T14:30:47.597Z"
+                total_processing_time: 4.56
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /debug/routing:
+    post:
+      summary: Debug Routing Decision
+      description: |
+        Test the supervisor agent's routing logic without performing full retrieval.
+        Useful for understanding how different queries are routed to specialized agents.
+        
+        This endpoint only performs the routing decision step, making it faster and
+        useful for debugging and understanding the agent selection logic.
+      tags:
+        - Debug
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebugRoutingRequest'
+            examples:
+              production_incident:
+                summary: Production Incident Routing Test
+                value:
+                  query: "database connection timeout causing login failures"
+                  user_can_wait: false
+                  production_incident: true
+              comprehensive_analysis:
+                summary: Comprehensive Analysis Routing Test
+                value:
+                  query: "authentication error patterns in recent tickets"
+                  user_can_wait: true
+                  production_incident: false
+              specific_ticket:
+                summary: Specific Ticket Routing Test
+                value:
+                  query: "HBASE-12345 connection timeout issue details"
+                  user_can_wait: false
+                  production_incident: false
+      responses:
+        '200':
+          description: Routing decision made successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugRoutingResponse'
+              example:
+                query: "authentication error in login system"
+                user_can_wait: false
+                production_incident: false
+                routing_decision: "ContextualCompression"
+                routing_reasoning: "This is a general technical query that requires semantic understanding. The ContextualCompression agent is best suited for this type of query as it can perform semantic search and compress the results for efficient processing."
+                timestamp: "2025-08-15T14:30:47.597Z"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Routing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /:
+    get:
+      summary: Interactive Test Interface
+      description: |
+        Returns an interactive HTML interface for testing the API endpoints.
+        Provides a user-friendly web interface to test all API functionality.
+      tags:
+        - Testing
+      responses:
+        '200':
+          description: HTML test interface
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    MultiAgentRAGRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: User query for JIRA ticket search
+          example: "authentication error in login system"
+          minLength: 1
+          maxLength: 1000
+        user_can_wait:
+          type: boolean
+          description: Whether user can wait for comprehensive results (enables Ensemble agent)
+          default: false
+        production_incident:
+          type: boolean
+          description: Whether this is a production incident requiring urgent response
+          default: false
+        openai_api_key:
+          type: string
+          description: Optional OpenAI API key for this request
+          nullable: true
+          format: password
+
+    DebugRoutingRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Query to test routing decision
+          example: "HBASE-123 connection timeout"
+          minLength: 1
+          maxLength: 1000
+        user_can_wait:
+          type: boolean
+          description: Whether user can wait for comprehensive results
+          default: false
+        production_incident:
+          type: boolean
+          description: Whether this is a production incident
+          default: false
+
+    RetrievalMetadata:
+      type: object
+      required:
+        - agent
+        - num_results
+        - processing_time
+        - method_type
+      properties:
+        agent:
+          type: string
+          description: Agent that performed retrieval
+          example: "ContextualCompression"
+        num_results:
+          type: integer
+          description: Number of results retrieved
+          minimum: 0
+          example: 3
+        processing_time:
+          type: number
+          format: float
+          description: Processing time in seconds
+          minimum: 0
+          example: 2.34
+        method_type:
+          type: string
+          description: Type of retrieval method used
+          example: "vector_similarity"
+        bm25_available:
+          type: boolean
+          description: Whether BM25 was available
+          nullable: true
+        is_urgent:
+          type: boolean
+          description: Whether urgent processing was used
+          nullable: true
+        methods_used:
+          type: array
+          items:
+            type: string
+          description: Methods used in ensemble
+          nullable: true
+          example: ["bm25", "vector"]
+        primary_source:
+          type: string
+          description: Primary source of results
+          nullable: true
+          example: "bugs"
+        source:
+          type: string
+          description: Source type
+          nullable: true
+          example: "supabase"
+        content_filtered:
+          type: boolean
+          description: Whether content was filtered
+          nullable: true
+
+    RetrievedContext:
+      type: object
+      required:
+        - content
+        - metadata
+        - source
+        - score
+      properties:
+        content:
+          type: string
+          description: Document content
+          example: "Authentication error occurred during login process..."
+        metadata:
+          type: object
+          description: Document metadata
+          additionalProperties: true
+          example:
+            key: "JBIDE-15832"
+            title: "SSH Authentication Issue"
+        source:
+          type: string
+          description: Source of the document
+          example: "bugs"
+        score:
+          type: number
+          format: float
+          description: Relevance score
+          minimum: 0
+          maximum: 1
+          example: 0.85
+
+    RelevantTicket:
+      type: object
+      required:
+        - key
+        - title
+      properties:
+        key:
+          type: string
+          description: JIRA ticket key (e.g., HBASE-123)
+          example: "JBIDE-15832"
+        title:
+          type: string
+          description: Ticket title
+          example: "Unable to create SSH session due to authentication failure"
+
+    MessageInfo:
+      type: object
+      required:
+        - content
+        - type
+      properties:
+        content:
+          type: string
+          description: Message content
+          example: "Routing query to ContextualCompression agent"
+        type:
+          type: string
+          description: Message type
+          example: "routing"
+
+    MultiAgentRAGResponse:
+      type: object
+      required:
+        - query
+        - final_answer
+        - relevant_tickets
+        - routing_decision
+        - routing_reasoning
+        - retrieval_method
+        - retrieved_contexts
+        - retrieval_metadata
+        - timestamp
+        - total_processing_time
+      properties:
+        query:
+          type: string
+          description: Original query
+          example: "authentication error in login system"
+        final_answer:
+          type: string
+          description: Generated response
+          example: "Based on the retrieved JIRA tickets, authentication errors in the login system are typically caused by..."
+        relevant_tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelevantTicket'
+          description: Relevant JIRA tickets found
+        routing_decision:
+          type: string
+          description: Which agent was selected
+          example: "ContextualCompression"
+        routing_reasoning:
+          type: string
+          description: Reasoning for agent selection
+          example: "This is a general technical query that requires semantic understanding and content compression for efficient retrieval."
+        retrieval_method:
+          type: string
+          description: Method used for retrieval
+          example: "supabase_vector_fallback"
+        retrieved_contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrievedContext'
+          description: Retrieved document contexts
+        retrieval_metadata:
+          $ref: '#/components/schemas/RetrievalMetadata'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageInfo'
+          description: Agent messages and processing steps
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2025-08-15T14:30:47.597Z"
+        total_processing_time:
+          type: number
+          format: float
+          description: Total processing time in seconds
+          minimum: 0
+          example: 4.56
+
+    DebugRoutingResponse:
+      type: object
+      required:
+        - query
+        - user_can_wait
+        - production_incident
+        - routing_decision
+        - routing_reasoning
+        - timestamp
+      properties:
+        query:
+          type: string
+          description: Original query
+          example: "authentication error in login system"
+        user_can_wait:
+          type: boolean
+          description: Whether user can wait for comprehensive results
+          example: false
+        production_incident:
+          type: boolean
+          description: Whether this is a production incident
+          example: false
+        routing_decision:
+          type: string
+          description: Which agent was selected
+          example: "ContextualCompression"
+        routing_reasoning:
+          type: string
+          description: Reasoning for agent selection
+          example: "This is a general technical query that requires semantic understanding. The ContextualCompression agent is best suited for this type of query as it can perform semantic search and compress the results for efficient processing."
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2025-08-15T14:30:47.597Z"
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+        - agents
+      properties:
+        status:
+          type: string
+          description: Service status
+          example: "healthy"
+          enum: ["healthy", "unhealthy"]
+        service:
+          type: string
+          description: Service name
+          example: "Cuttlefish3 Multi-Agent RAG"
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+          example: "2025-08-15T14:30:47.597Z"
+        agents:
+          type: object
+          description: Agent configuration information
+          additionalProperties:
+            type: string
+          example:
+            supervisor: "GPT-4o"
+            response_writer: "GPT-4o"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request: Query cannot be empty"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2025-08-15T14:30:47.597Z"
+        path:
+          type: string
+          description: Request path that caused the error
+          example: "/multiagent-rag"
+          nullable: true
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (if required)
+
+tags:
+  - name: Health
+    description: Health check and monitoring endpoints
+  - name: RAG
+    description: Multi-agent RAG query processing endpoints
+  - name: Debug
+    description: Debugging and testing endpoints
+  - name: Testing
+    description: Testing and development tools
+

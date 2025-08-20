@@ -1,0 +1,13 @@
+{
+  "log_file": "scripts/cuttlefish_synthetic_logs.log",
+  "project_id": "octopus-282815",
+  "log_name": "cuttlefish_synthetic_logs",
+  "file_size_mb": 0.0005931854248046875,
+  "total_lines_processed": 5,
+  "successful_entries": 5,
+  "failed_entries": 0,
+  "total_entries": 5,
+  "processing_time_seconds": 0.6341240406036377,
+  "lines_per_second": 7.884892670589151,
+  "success_rate": 1.0
+}

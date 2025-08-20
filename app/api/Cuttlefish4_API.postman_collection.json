@@ -1,0 +1,443 @@
+{
+	"info": {
+		"_postman_id": "cuttlefish4-api-collection",
+		"name": "Cuttlefish4 Multi-Agent RAG API",
+		"description": "Comprehensive collection for testing the Cuttlefish4 Multi-Agent RAG API. This collection includes all endpoints for health checks, RAG query processing, and debugging functionality.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "cuttlefish4-dev"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check the health status of the API service. Returns service status, version, and agent configuration information."
+					},
+					"response": [
+						{
+							"name": "Healthy Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/health",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"health"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": \"healthy\",\n  \"service\": \"Cuttlefish3 Multi-Agent RAG\",\n  \"version\": \"1.0.0\",\n  \"timestamp\": \"2025-08-15T14:30:47.597Z\",\n  \"agents\": {\n    \"supervisor\": \"GPT-4o\",\n    \"response_writer\": \"GPT-4o\"\n  }\n}"
+						}
+					]
+				}
+			],
+			"description": "Health check and monitoring endpoints"
+		},
+		{
+			"name": "Multi-Agent RAG",
+			"item": [
+				{
+					"name": "Production Incident Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"database connection timeout causing login failures\",\n  \"user_can_wait\": false,\n  \"production_incident\": true,\n  \"openai_api_key\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/multiagent-rag",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"multiagent-rag"
+							]
+						},
+						"description": "Process a production incident query that requires urgent response. This type of query gets priority processing and typically routes to the ContextualCompression agent for fast, focused retrieval."
+					},
+					"response": []
+				},
+				{
+					"name": "Comprehensive Analysis Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"authentication error patterns in recent tickets\",\n  \"user_can_wait\": true,\n  \"production_incident\": false,\n  \"openai_api_key\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/multiagent-rag",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"multiagent-rag"
+							]
+						},
+						"description": "Process a comprehensive analysis query when the user can wait for detailed results. This enables the Ensemble agent to combine multiple retrieval methods for thorough analysis."
+					},
+					"response": []
+				},
+				{
+					"name": "Specific Ticket Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"HBASE-12345 connection timeout issue details\",\n  \"user_can_wait\": false,\n  \"production_incident\": false,\n  \"openai_api_key\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/multiagent-rag",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"multiagent-rag"
+							]
+						},
+						"description": "Process a query that references a specific JIRA ticket number. This type of query typically routes to the BM25 agent for exact keyword matching."
+					},
+					"response": []
+				},
+				{
+					"name": "General Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"Java OutOfMemoryError troubleshooting\",\n  \"user_can_wait\": false,\n  \"production_incident\": false,\n  \"openai_api_key\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/multiagent-rag",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"multiagent-rag"
+							]
+						},
+						"description": "Process a general technical query. This is the default query type that routes to the ContextualCompression agent for semantic understanding."
+					},
+					"response": []
+				},
+				{
+					"name": "Custom Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"{{custom_query}}\",\n  \"user_can_wait\": {{user_can_wait}},\n  \"production_incident\": {{production_incident}},\n  \"openai_api_key\": \"{{openai_api_key}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/multiagent-rag",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"multiagent-rag"
+							]
+						},
+						"description": "Process a custom query with variable parameters. Use this request to test different query types and configurations."
+					},
+					"response": []
+				}
+			],
+			"description": "Multi-agent RAG query processing endpoints for intelligent JIRA ticket retrieval"
+		},
+		{
+			"name": "Debug Routing",
+			"item": [
+				{
+					"name": "Production Incident Routing Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"database connection timeout causing login failures\",\n  \"user_can_wait\": false,\n  \"production_incident\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/debug/routing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"debug",
+								"routing"
+							]
+						},
+						"description": "Test routing decision for a production incident query. This should route to ContextualCompression agent for urgent processing."
+					},
+					"response": []
+				},
+				{
+					"name": "Comprehensive Analysis Routing Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"authentication error patterns in recent tickets\",\n  \"user_can_wait\": true,\n  \"production_incident\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/debug/routing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"debug",
+								"routing"
+							]
+						},
+						"description": "Test routing decision for a comprehensive analysis query. This should route to Ensemble agent when user_can_wait is true."
+					},
+					"response": []
+				},
+				{
+					"name": "Specific Ticket Routing Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"HBASE-12345 connection timeout issue details\",\n  \"user_can_wait\": false,\n  \"production_incident\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/debug/routing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"debug",
+								"routing"
+							]
+						},
+						"description": "Test routing decision for a specific ticket query. This should route to BM25 agent for exact keyword matching."
+					},
+					"response": []
+				},
+				{
+					"name": "Custom Routing Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"{{custom_query}}\",\n  \"user_can_wait\": {{user_can_wait}},\n  \"production_incident\": {{production_incident}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/debug/routing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"debug",
+								"routing"
+							]
+						},
+						"description": "Test routing decision for a custom query. Use this to understand how different queries are routed to specialized agents."
+					},
+					"response": []
+				}
+			],
+			"description": "Debug endpoints for testing routing decisions without full processing"
+		},
+		{
+			"name": "Testing Interface",
+			"item": [
+				{
+					"name": "Interactive Test Interface",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Access the interactive HTML test interface. This provides a user-friendly web interface to test all API functionality without using Postman."
+					},
+					"response": []
+				}
+			],
+			"description": "Testing and development tools"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script for logging",
+					"console.log('Making request to: ' + pm.request.url);",
+					"console.log('Method: ' + pm.request.method);",
+					"if (pm.request.body && pm.request.body.mode === 'raw') {",
+					"    console.log('Request body: ' + pm.request.body.raw);",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Test script for response validation",
+					"pm.test('Status code is 200', function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test('Response time is less than 10 seconds', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(10000);",
+					"});",
+					"",
+					"pm.test('Response has required headers', function () {",
+					"    pm.response.to.have.header('Content-Type');",
+					"});",
+					"",
+					"// Additional tests for specific endpoints",
+					"if (pm.request.url.path.includes('/health')) {",
+					"    pm.test('Health check returns healthy status', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData.status).to.eql('healthy');",
+					"        pm.expect(jsonData.service).to.include('Cuttlefish');",
+					"    });",
+					"}",
+					"",
+					"if (pm.request.url.path.includes('/multiagent-rag')) {",
+					"    pm.test('RAG response has required fields', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData).to.have.property('query');",
+					"        pm.expect(jsonData).to.have.property('final_answer');",
+					"        pm.expect(jsonData).to.have.property('routing_decision');",
+					"        pm.expect(jsonData).to.have.property('retrieved_contexts');",
+					"    });",
+					"}",
+					"",
+					"if (pm.request.url.path.includes('/debug/routing')) {",
+					"    pm.test('Routing response has required fields', function () {",
+					"        const jsonData = pm.response.json();",
+					"        pm.expect(jsonData).to.have.property('routing_decision');",
+					"        pm.expect(jsonData).to.have.property('routing_reasoning');",
+					"        pm.expect(jsonData).to.have.property('timestamp');",
+					"    });",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the API server"
+		},
+		{
+			"key": "custom_query",
+			"value": "authentication error in login system",
+			"type": "string",
+			"description": "Custom query for testing"
+		},
+		{
+			"key": "user_can_wait",
+			"value": "false",
+			"type": "string",
+			"description": "Whether user can wait for comprehensive results"
+		},
+		{
+			"key": "production_incident",
+			"value": "false",
+			"type": "string",
+			"description": "Whether this is a production incident"
+		},
+		{
+			"key": "openai_api_key",
+			"value": "",
+			"type": "string",
+			"description": "Optional OpenAI API key for requests"
+		}
+	]
+}
+

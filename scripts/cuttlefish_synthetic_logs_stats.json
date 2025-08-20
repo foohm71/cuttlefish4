@@ -1,0 +1,8 @@
+{
+  "total_entries": 164964,
+  "error_entries": 181,
+  "actual_size_mb": 20.000008583068848,
+  "actual_error_rate": 0.001097209088043452,
+  "output_file": "cuttlefish_synthetic_logs.log",
+  "time_span_hours": 1396.1266666666668
+}

@@ -1,0 +1,12 @@
+{
+  "log_file": "cuttlefish_synthetic_logs.log",
+  "file_size_mb": 0.0005931854248046875,
+  "total_lines_processed": 5,
+  "total_events_sent": 5,
+  "successful_batches": 1,
+  "failed_batches": 0,
+  "total_batches": 1,
+  "processing_time_seconds": 0.3607752323150635,
+  "lines_per_second": 13.859044502349654,
+  "success_rate": 1.0
+}
