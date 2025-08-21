@@ -287,7 +287,7 @@ Respond with JSON in this format:
                 
                 # Ensure each search has required fields
                 for search in strategy_data['searches']:
-                    search.setdefault('time_range', '-1h' if production_incident else '-24h')
+                    search.setdefault('time_range', '-72h' if production_incident else '-168h')  # 3 days for prod, 7 days for non-prod
                     search.setdefault('max_results', 30 if production_incident else 50)
                     search.setdefault('type', 'general_search')
                 
@@ -322,13 +322,13 @@ Respond with JSON in this format:
                     {
                         'query': query,
                         'type': 'exception_search',
-                        'time_range': '-1h',
+                        'time_range': '-72h',  # 3 days for production incidents
                         'max_results': 30
                     },
                     {
                         'query': f'ERROR {query}',
                         'type': 'production_issue',
-                        'time_range': '-2h',
+                        'time_range': '-72h',  # 3 days for production incidents
                         'max_results': 20
                     }
                 ]
@@ -342,7 +342,7 @@ Respond with JSON in this format:
                     {
                         'query': f'ERROR OR WARN {query}',
                         'type': 'general_search',
-                        'time_range': '-1h',
+                        'time_range': '-72h',  # 3 days for production incidents
                         'max_results': 30
                     }
                 ]
@@ -356,7 +356,7 @@ Respond with JSON in this format:
                     {
                         'query': query,
                         'type': 'general_search',
-                        'time_range': '-24h',
+                        'time_range': '-168h',  # 7 days for non-production queries
                         'max_results': 50
                     }
                 ]
