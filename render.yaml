@@ -2,7 +2,7 @@ services:
   - type: web
     name: cuttlefish-backend
     runtime: python3
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements-production.txt
     startCommand: python -m app.api.main
     plan: starter  # Change to 'standard' for production
     region: oregon  # Change as needed

@@ -1,5 +1,9 @@
-# Cuttlefish Multi-Agent RAG System - Python Dependencies
-# Generated from notebook analysis and reorganization
+# Copyright (c) 2025 Heemeng Foo
+# SPDX-License-Identifier: BUSL-1.1
+# See the LICENSE file for usage restrictions and the 2029-08-20 Apache-2.0 conversion.
+
+# Cuttlefish4 Production Dependencies (minimal, no pandas)
+# For FastAPI backend deployment on Render.com
 
 # ===========================================
 # AI/ML and Language Models
@@ -20,15 +24,11 @@ openai>=1.40.6
 # Web Framework and API
 # ===========================================
 
-# FastAPI (replacing Flask)
+# FastAPI
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# Original Flask dependencies (for reference/migration)
-flask==3.0.0
-flask-cors==4.0.0
-
-# Pydantic for data validation (compatible with langchain-core)
+# Pydantic for data validation
 pydantic>=2.7.4,<3.0.0
 
 # Authentication and security
@@ -45,20 +45,19 @@ sqlalchemy>=1.4.0,<2.1.0
 supabase>=2.2.0
 postgrest>=0.13.0
 
-# ===========================================
-# Data Processing and Utilities
-# ===========================================
+# PostgreSQL database driver
+psycopg2-binary>=2.9.0
 
-# Data processing (optional - only needed for data upload scripts)
-# pandas>=2.0.0,<2.3.0
-# numpy>=1.24.0,<1.27.0
+# ===========================================
+# Utilities
+# ===========================================
 
 # Utilities
 python-dotenv==1.0.0
 tqdm==4.66.1
 
 # ===========================================
-# Additional Production Dependencies
+# Production Dependencies
 # ===========================================
 
 # Logging and monitoring
@@ -74,35 +73,9 @@ tavily-python>=0.3.0
 # Google Cloud Platform (for LogSearch agent)
 google-cloud-logging>=3.8.0
 
-# Async support (built into Python 3.7+)
-# asyncio is part of standard library
-
 # ===========================================
-# Development and Testing (Optional)
+# Advanced RAG Dependencies
 # ===========================================
 
-# Uncomment for development
-# pytest>=7.0.0
-# pytest-asyncio>=0.21.0
-# black>=23.0.0
-# isort>=5.12.0
-# mypy>=1.0.0
-# jupyter>=1.0.0
-
-# ===========================================
-# Optional Performance Enhancements
-# ===========================================
-
-# PostgreSQL database driver (required for Supabase PostgreSQL)
-psycopg2-binary>=2.9.0  # For PostgreSQL connections
-
-# Uncomment for better performance
-# asyncpg>=0.28.0  # Async PostgreSQL driver  
-# orjson>=3.9.0  # Fast JSON parsing
-
-# ===========================================
-# Advanced RAG Ensemble Dependencies
-# ===========================================
-
-# For advanced ensemble retrieval features
-cohere>=4.50.0  # For ContextualCompressionRetriever reranking (optional)
+# For ContextualCompressionRetriever reranking
+cohere>=4.50.0
