@@ -68,6 +68,19 @@ class GCPAuthenticator:
                 logger.info(f"✅ Using Service Account Key from: {sa_key_path}")
                 return self.client
         except Exception as e:
+            logger.debug(f"Service Account file authentication failed: {e}")
+        
+        # Method 4: Try GOOGLE_APPLICATION_CREDENTIALS_JSON (JSON content)
+        try:
+            gac_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+            if gac_json:
+                sa_info = json.loads(gac_json)
+                credentials = service_account.Credentials.from_service_account_info(sa_info)
+                self.client = cloud_logging.Client(project=self.project_id, credentials=credentials)
+                self.auth_method = "gac_json_content"
+                logger.info("✅ Using Service Account JSON from GOOGLE_APPLICATION_CREDENTIALS_JSON")
+                return self.client
+        except Exception as e:
             logger.debug(f"Service Account Key file failed: {e}")
         
         # Method 4: Try Application Default Credentials
@@ -84,8 +97,9 @@ class GCPAuthenticator:
             "No valid authentication method found. Please set up one of:\n"
             "1. Workload Identity (for GKE/Cloud Run)\n"
             "2. GOOGLE_SERVICE_ACCOUNT_JSON environment variable\n"
-            "3. GOOGLE_APPLICATION_CREDENTIALS environment variable\n"
-            "4. Application Default Credentials (gcloud auth application-default login)"
+            "3. GOOGLE_APPLICATION_CREDENTIALS environment variable (file path)\n"
+            "4. GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable (JSON content)\n"
+            "5. Application Default Credentials (gcloud auth application-default login)"
         )
     
     def test_authentication(self) -> Dict[str, Any]:

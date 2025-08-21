@@ -29,11 +29,13 @@ services:
 # Database Configuration (PostgreSQL for user management)
       - key: DATABASE_URL
         sync: false  # Set to: postgresql://postgres:YOUR_DB_PASSWORD@db.jzstozvrjjhmwigycjtj.supabase.co:5432/postgres
-      # GCP Configuration for LogSearch
+      # GCP Configuration for LogSearch (choose one JSON option)
       - key: GOOGLE_CLOUD_PROJECT
         value: octopus-282815
       - key: GOOGLE_SERVICE_ACCOUNT_JSON
-        sync: false  # Set this as JSON string in Render dashboard
+        sync: false  # Option 1: Set this as JSON string in Render dashboard
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON  
+        sync: false  # Option 2: Alternative JSON env var (if GOOGLE_APPLICATION_CREDENTIALS shows up as full JSON)
       # Supabase Configuration (for JIRA data and user database)
       - key: SUPABASE_URL
         value: https://jzstozvrjjhmwigycjtj.supabase.co
