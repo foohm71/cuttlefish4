@@ -41,6 +41,8 @@ services:
         value: https://jzstozvrjjhmwigycjtj.supabase.co
       - key: SUPABASE_KEY
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6c3RvenZyampobXdpZ3ljanRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NDY0ODcsImV4cCI6MjA3MDUyMjQ4N30.PqLe_3VJ9idxMdARRa8beciaXPnfQHhYWI7C05yPhMQ
+      - key: SUPABASE_DB_PASSWORD
+        sync: false  # Set your Supabase database password in Render dashboard
       # Web Search API
       - key: TAVILY_API_KEY
         sync: false  # Set in dashboard

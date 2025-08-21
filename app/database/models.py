@@ -152,7 +152,14 @@ class DatabaseManager:
                 supabase_url = os.getenv("SUPABASE_URL")
                 # Extract project ref from URL: https://projectref.supabase.co
                 project_ref = supabase_url.replace("https://", "").replace(".supabase.co", "")
-                db_password = os.getenv("SUPABASE_DB_PASSWORD", "your-db-password")
+                db_password = os.getenv("SUPABASE_DB_PASSWORD")
+                
+                if not db_password or db_password == "your-db-password":
+                    raise ValueError(
+                        "SUPABASE_DB_PASSWORD environment variable is required for database connection. "
+                        "Please set this in your deployment environment (Render dashboard)."
+                    )
+                
                 self.database_url = f"postgresql://postgres:{db_password}@db.{project_ref}.supabase.co:5432/postgres"
             else:
                 # Fallback to SQLite for development
