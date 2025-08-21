@@ -10,10 +10,13 @@ SQLAlchemy models for Cuttlefish4 authentication system.
 from datetime import datetime, date
 from typing import Optional
 import os
+import logging
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Date, Float, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -147,12 +150,17 @@ class DatabaseManager:
             if os.getenv("DATABASE_URL"):
                 # Use provided PostgreSQL URL (for production/Supabase)
                 self.database_url = os.getenv("DATABASE_URL")
+                logger.info(f"Using DATABASE_URL: {self.database_url[:50]}...")
             elif os.getenv("SUPABASE_URL"):
                 # Construct PostgreSQL URL from Supabase config
                 supabase_url = os.getenv("SUPABASE_URL")
                 # Extract project ref from URL: https://projectref.supabase.co
                 project_ref = supabase_url.replace("https://", "").replace(".supabase.co", "")
                 db_password = os.getenv("SUPABASE_DB_PASSWORD")
+                
+                logger.info(f"Supabase URL: {supabase_url}")
+                logger.info(f"Project ref: {project_ref}")
+                logger.info(f"Password set: {'Yes' if db_password else 'No'}")
                 
                 if not db_password or db_password == "your-db-password":
                     raise ValueError(
@@ -161,12 +169,15 @@ class DatabaseManager:
                     )
                 
                 self.database_url = f"postgresql://postgres:{db_password}@db.{project_ref}.supabase.co:5432/postgres"
+                logger.info(f"Constructed DB URL: postgresql://postgres:***@db.{project_ref}.supabase.co:5432/postgres")
             else:
                 # Fallback to SQLite for development
                 database_path = os.getenv("DATABASE_PATH", "./users.db") 
                 self.database_url = f"sqlite:///{database_path}"
+                logger.info(f"Using SQLite: {self.database_url}")
         else:
             self.database_url = database_url
+            logger.info(f"Using provided URL: {database_url[:50]}...")
             
         # Configure engine based on database type
         if "sqlite" in self.database_url:
