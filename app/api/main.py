@@ -601,7 +601,7 @@ async def shutdown_event():
 if __name__ == "__main__":
     # Development server
     port = int(os.environ.get("PORT", 8000))
-    host = os.environ.get("HOST", "127.0.0.1")
+    host = os.environ.get("HOST", "0.0.0.0")  # Bind to all interfaces for production
     
     logger.info(f"Starting development server on {host}:{port}")
     
