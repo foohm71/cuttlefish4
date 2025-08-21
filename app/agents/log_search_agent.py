@@ -53,8 +53,9 @@ class LogSearchAgent:
             self.search_tools = GCPLogSearchTools()
             logger.info(f"✅ LogSearch Agent initialized with GCP backend (max_searches={max_searches})")
         except Exception as e:
-            logger.error(f"Failed to initialize GCP backend: {e}")
-            raise Exception(f"Failed to initialize GCP log search backend: {e}")
+            logger.warning(f"⚠️  GCP LogSearch not available: {e}")
+            logger.info("LogSearch will be disabled until GCP credentials are configured")
+            self.search_tools = None
     
     
     def process(self, state: AgentState) -> AgentState:
@@ -72,6 +73,18 @@ class LogSearchAgent:
         production_incident = state.get('production_incident', False)
         
         logger.info(f"LogSearch Agent processing: '{query[:50]}...'")
+        
+        # Check if LogSearch is available
+        if self.search_tools is None:
+            logger.warning("LogSearch not available - GCP credentials not configured")
+            state['retrieval_results'] = []
+            state['retrieval_method'] = 'logsearch_unavailable'
+            state['retrieval_metadata'] = {
+                'total_results': 0,
+                'search_time': 0,
+                'message': 'LogSearch unavailable - GCP authentication required'
+            }
+            return state
         
         try:
             # Step 1: Assess query and determine search strategy
