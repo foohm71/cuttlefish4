@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Heemeng Foo
+# SPDX-License-Identifier: BUSL-1.1
+# See the LICENSE file for usage restrictions and the 2029-08-20 Apache-2.0 conversion.
+
 """
 Google Cloud Platform log search tools for LogSearch agent.
 Provides search functionality for GCP Cloud Logging with cloud-ready authentication.

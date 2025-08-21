@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025 Heemeng Foo
+# SPDX-License-Identifier: BUSL-1.1
+# See the LICENSE file for usage restrictions and the 2029-08-20 Apache-2.0 conversion.
+
 """
 FastAPI main application for Cuttlefish multi-agent RAG system.
 Converted from Flask implementation with same endpoints and functionality.
@@ -44,8 +48,7 @@ try:
     from .workflow import MultiAgentWorkflow
     from ..auth.routes import router as auth_router
     from ..auth.middleware import get_current_active_user, log_api_request
-    from ..database.models import User, get_db
-    from ..database.init_db import initialize_database, check_database_exists
+    from ..database.models import User, get_db, db_manager
 except ImportError:
     # Fall back to absolute imports (for direct import)
     from app.api.models import (
@@ -55,8 +58,7 @@ except ImportError:
     from app.api.workflow import MultiAgentWorkflow
     from app.auth.routes import router as auth_router
     from app.auth.middleware import get_current_active_user, log_api_request
-    from app.database.models import User, get_db
-    from app.database.init_db import initialize_database, check_database_exists
+    from app.database.models import User, get_db, db_manager
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -572,13 +574,10 @@ async def startup_event():
     """Initialize application on startup."""
     logger.info("🚀 Starting Cuttlefish Multi-Agent RAG API...")
     try:
-        # Initialize database
-        if not check_database_exists():
-            logger.info("Initializing database...")
-            if not initialize_database():
-                raise Exception("Failed to initialize database")
-        else:
-            logger.info("✅ Database ready")
+        # Initialize database tables
+        logger.info("Initializing database tables...")
+        db_manager.create_tables()
+        logger.info("✅ Database ready")
         
         # Initialize workflow (lazy loading)
         logger.info("API startup complete - workflow will be initialized on first request")

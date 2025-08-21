@@ -1,0 +1,23 @@
+# Cuttlefish Multi-Agent RAG System - Core Dependencies Only
+# This file contains only the absolutely essential packages
+
+# Core AI/ML packages (compatible family)
+langchain-core
+langchain-openai
+langchain-community
+langgraph
+openai
+pandas
+
+# Web framework
+fastapi
+uvicorn[standard]
+pydantic
+
+# Database
+supabase
+
+# Essential utilities
+python-dotenv
+tqdm
+requests

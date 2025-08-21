@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+# Copyright (c) 2025 Heemeng Foo
+# SPDX-License-Identifier: BUSL-1.1
+# See the LICENSE file for usage restrictions and the 2029-08-20 Apache-2.0 conversion.
+
 """
 SQLAlchemy models for Cuttlefish4 authentication system.
 """
 
 from datetime import datetime, date
 from typing import Optional
+import os
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Date, Float, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -136,12 +141,42 @@ class AuthResponse(BaseModel):
 class DatabaseManager:
     """Database connection and session management."""
     
-    def __init__(self, database_url: str = "sqlite:///./users.db"):
-        self.database_url = database_url
-        self.engine = create_engine(
-            database_url,
-            connect_args={"check_same_thread": False} if "sqlite" in database_url else {}
-        )
+    def __init__(self, database_url: str = None):
+        if database_url is None:
+            # Auto-detect database URL from environment
+            if os.getenv("DATABASE_URL"):
+                # Use provided PostgreSQL URL (for production/Supabase)
+                self.database_url = os.getenv("DATABASE_URL")
+            elif os.getenv("SUPABASE_URL"):
+                # Construct PostgreSQL URL from Supabase config
+                supabase_url = os.getenv("SUPABASE_URL")
+                # Extract project ref from URL: https://projectref.supabase.co
+                project_ref = supabase_url.replace("https://", "").replace(".supabase.co", "")
+                db_password = os.getenv("SUPABASE_DB_PASSWORD", "your-db-password")
+                self.database_url = f"postgresql://postgres:{db_password}@db.{project_ref}.supabase.co:5432/postgres"
+            else:
+                # Fallback to SQLite for development
+                database_path = os.getenv("DATABASE_PATH", "./users.db") 
+                self.database_url = f"sqlite:///{database_path}"
+        else:
+            self.database_url = database_url
+            
+        # Configure engine based on database type
+        if "sqlite" in self.database_url:
+            self.engine = create_engine(
+                self.database_url,
+                connect_args={"check_same_thread": False}
+            )
+        else:
+            # PostgreSQL configuration
+            self.engine = create_engine(
+                self.database_url,
+                pool_size=10,
+                max_overflow=20,
+                pool_pre_ping=True,
+                pool_recycle=300
+            )
+        
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
     
     def create_tables(self):

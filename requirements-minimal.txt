@@ -1,0 +1,28 @@
+# Cuttlefish Multi-Agent RAG System - Minimal Dependencies
+# This file contains only the essential, well-tested packages with pinned versions
+
+# Core AI/ML packages (compatible versions)
+langchain-core==0.3.15
+langchain-openai==0.2.8
+langchain-community==0.3.15
+langchain-cohere==0.3.3
+langgraph==0.2.45
+openai==1.54.4
+qdrant-client==1.11.3
+
+# Web framework
+fastapi==0.115.4
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+
+# Database
+supabase==2.2.0
+
+# Data processing
+pandas==2.2.2
+python-dotenv==1.0.0
+tqdm==4.66.1
+
+# HTTP requests
+httpx==0.25.2
+requests==2.31.0

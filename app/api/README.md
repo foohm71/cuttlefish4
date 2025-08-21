@@ -436,7 +436,11 @@ docker run -p 8000:8000 cuttlefish4-api
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+**BUSL-1.1 (non-production)** — see [LICENSE](../../LICENSE).  
+Commercial/production use requires a separate agreement with the author.  
+On **2029-08-20**, Cuttlefish converts to **Apache-2.0**.
+
+Contact: foohm@kawan2.com
 
 ## 🆘 Support
 

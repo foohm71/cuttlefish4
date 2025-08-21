@@ -35,7 +35,7 @@ pydantic>=2.7.4,<3.0.0
 python-jose[cryptography]==3.3.0
 google-auth==2.23.4
 google-auth-oauthlib==1.1.0
-sqlalchemy==2.0.23
+sqlalchemy>=1.4.0,<2.1.0
 
 # ===========================================
 # Database and Storage
@@ -93,9 +93,11 @@ google-cloud-logging>=3.8.0
 # Optional Performance Enhancements
 # ===========================================
 
+# PostgreSQL database driver (required for Supabase PostgreSQL)
+psycopg2-binary>=2.9.0  # For PostgreSQL connections
+
 # Uncomment for better performance
-# psycopg2-binary>=2.9.0  # For PostgreSQL connections
-# asyncpg>=0.28.0  # Async PostgreSQL driver
+# asyncpg>=0.28.0  # Async PostgreSQL driver  
 # orjson>=3.9.0  # Fast JSON parsing
 
 # ===========================================

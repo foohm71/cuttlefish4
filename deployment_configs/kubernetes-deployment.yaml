@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logsearch-agent
+  labels:
+    app: logsearch-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logsearch-agent
+  template:
+    metadata:
+      labels:
+        app: logsearch-agent
+    spec:
+      containers:
+      - name: logsearch-agent
+        image: gcr.io/octopus-282815/logsearch-agent:latest
+        env:
+        - name: GOOGLE_CLOUD_PROJECT
+          value: "octopus-282815"
+        - name: USE_GCP_LOGGING
+          value: "true"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/app/credentials/sa-key.json"
+        volumeMounts:
+        - name: gcp-sa-key
+          mountPath: /app/credentials
+          readOnly: true
+        ports:
+        - containerPort: 8080
+      volumes:
+      - name: gcp-sa-key
+        secret:
+          secretName: gcp-service-account-key
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp-service-account-key
+type: Opaque
+data:
+  sa-key.json: # Base64 encoded service account key

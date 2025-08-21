@@ -315,3 +315,10 @@ This version (Cuttlefish4) provides the same API endpoints as Cuttlefish3 but wi
 - Improved test interface and debugging capabilities
 
 The migration maintains backward compatibility with existing API clients.
+
+## License
+**BUSL-1.1 (non-production)** — see [LICENSE](./LICENSE).  
+Commercial/production use requires a separate agreement with the author.  
+On **2029-08-20**, Cuttlefish converts to **Apache-2.0**.
+
+Contact: foohm@kawan2.com

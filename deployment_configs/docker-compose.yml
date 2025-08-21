@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  logsearch-agent:
+    image: logsearch-agent:latest
+    environment:
+      - GOOGLE_CLOUD_PROJECT=octopus-282815
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/sa-key.json
+      - USE_GCP_LOGGING=true
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logsearch-sa-key.json:/app/credentials/sa-key.json:ro
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

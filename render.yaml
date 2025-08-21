@@ -26,19 +26,19 @@ services:
         generateValue: true  # Render will auto-generate
       - key: JWT_SECRET_KEY
         generateValue: true  # Render will auto-generate
-      # Database
+# Database Configuration (PostgreSQL for user management)
       - key: DATABASE_URL
-        sync: false  # Set in dashboard if using external DB
+        sync: false  # Set to: postgresql://postgres:YOUR_DB_PASSWORD@db.jzstozvrjjhmwigycjtj.supabase.co:5432/postgres
       # GCP Configuration for LogSearch
       - key: GOOGLE_CLOUD_PROJECT
         value: octopus-282815
       - key: GOOGLE_SERVICE_ACCOUNT_JSON
         sync: false  # Set this as JSON string in Render dashboard
-      # Supabase Configuration (if needed)
+      # Supabase Configuration (for JIRA data and user database)
       - key: SUPABASE_URL
-        sync: false  # Set in dashboard
-      - key: SUPABASE_ANON_KEY
-        sync: false  # Set in dashboard
+        value: https://jzstozvrjjhmwigycjtj.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6c3RvenZyampobXdpZ3ljanRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NDY0ODcsImV4cCI6MjA3MDUyMjQ4N30.PqLe_3VJ9idxMdARRa8beciaXPnfQHhYWI7C05yPhMQ
       # Web Search API
       - key: TAVILY_API_KEY
         sync: false  # Set in dashboard

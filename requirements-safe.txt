@@ -1,0 +1,27 @@
+# Cuttlefish Multi-Agent RAG System - Safe Dependencies
+# This file uses compatible version ranges that pip can resolve
+
+# Core AI/ML packages (let pip resolve compatible versions)
+langchain-core>=0.2.0,<0.4.0
+langchain-openai>=0.1.0,<0.3.0
+langchain-community>=0.2.0,<0.4.0
+langchain-cohere>=0.1.0,<0.4.0
+langgraph>=0.2.0,<0.3.0
+openai>=1.40.0,<2.0.0
+
+# Web framework
+fastapi>=0.100.0,<0.200.0
+uvicorn[standard]>=0.20.0,<1.0.0
+pydantic>=2.5.0,<3.0.0
+
+# Database
+supabase>=2.0.0,<3.0.0
+
+# Data processing (Python 3.13 compatible)
+pandas>=2.2.0,<3.0.0
+
+# Essential utilities
+python-dotenv>=1.0.0,<2.0.0
+tqdm>=4.60.0,<5.0.0
+requests>=2.25.0,<3.0.0
+httpx>=0.24.0,<1.0.0

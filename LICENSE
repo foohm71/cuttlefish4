@@ -1,0 +1,56 @@
+Business Source License 1.1
+
+Licensor: Heemeng Foo
+Licensed Work: Cuttlefish (all source files and other material in this repository except for files in 'reference' folder which belong to AIMakerspace))
+Additional Use Grant:
+  You may use, copy, and modify the Licensed Work solely for internal,
+  non-commercial evaluation and development. You may NOT, without a separate
+  written agreement with the Licensor:
+    (a) use the Licensed Work or any derivative in production;
+    (b) provide or offer it as, or within, a hosted/managed service (SaaS);
+    (c) combine, integrate, or distribute it as part of any product or system
+        to third parties; or
+    (d) build, fine-tune, or train a competing system using the Licensed Work.
+
+Change Date: 2029-08-20
+Change License: Apache-2.0
+
+1. License Grant (pre-Change Date).
+   Subject to the terms above, the Licensor grants you a non-exclusive,
+   worldwide, non-transferable, royalty-free copyright license to use, copy,
+   modify, and create derivative works of the Licensed Work for the purposes
+   permitted in the Additional Use Grant. Any other use (including “Production
+   Use”) is prohibited unless you obtain a separate commercial license.
+
+   “Production Use” means any use of the Licensed Work or a derivative by or
+   for the benefit of anyone other than your own internal, non-commercial
+   evaluation and development (including use in or for a product, service,
+   or deployment—internal or external—other than non-commercial evaluation).
+
+2. Change License.
+   On the Change Date, the Licensed Work will be made available under the Change
+   License specified above. Your rights under this Business Source License will
+   then terminate and your use thereafter is governed by the Change License.
+
+3. Notices.
+   You must retain this license text and the copyright notice in all copies or
+   substantial portions of the Licensed Work.
+
+4. No Trademark or Patent Rights.
+   This license does not grant any rights in the Licensor’s trademarks, trade
+   names, or logos. No patent rights are granted under this license.
+
+5. Disclaimer of Warranty.
+   THE LICENSED WORK IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+6. Limitation of Liability.
+   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER
+   DEALINGS IN THE LICENSED WORK.
+
+The Licensor may offer separate commercial terms for Production Use.
+
+SPDX-License-Identifier: BUSL-1.1

@@ -1,0 +1,21 @@
+# Minimal requirements for authentication system
+# Install this first to avoid conflicts
+
+# FastAPI and web framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+
+# Authentication and security
+python-jose[cryptography]>=3.3.0
+google-auth>=2.23.4
+google-auth-oauthlib>=1.1.0
+sqlalchemy>=2.0.23
+
+# Pydantic for data validation
+pydantic>=2.7.4,<3.0.0
+
+# HTTP requests
+httpx>=0.24.0,<1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
