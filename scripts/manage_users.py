@@ -60,7 +60,7 @@ def list_users():
         
         print(f"{email:<30} {name:<20} {limit:<8} {used:<6} {str(unlimited):<10} {str(active):<8} {str(admin):<7} {created_date}")
 
-def add_user(email: str, google_id: str = None, daily_limit: int = 50, 
+def add_user(email: str, google_id: str = None, daily_limit: int = 20, 
              unlimited: bool = False, admin: bool = False, name: str = None):
     """Add a new user."""
     conn = get_db_connection()
@@ -297,7 +297,7 @@ def main():
     add_parser = subparsers.add_parser('add', help='Add a new user')
     add_parser.add_argument('email', help='User email address')
     add_parser.add_argument('--name', help='Display name')
-    add_parser.add_argument('--limit', type=int, default=50, help='Daily request limit')
+    add_parser.add_argument('--limit', type=int, default=20, help='Daily request limit')
     add_parser.add_argument('--unlimited', action='store_true', help='Give unlimited access')
     add_parser.add_argument('--admin', action='store_true', help='Give admin privileges')
     add_parser.add_argument('--google-id', help='Google user ID (optional)')
