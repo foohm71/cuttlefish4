@@ -48,7 +48,7 @@ try:
     from .workflow import MultiAgentWorkflow
     from ..auth.routes import router as auth_router
     from ..auth.middleware import get_current_active_user, log_api_request
-    from ..database.models import User, get_db, db_manager
+    from ..database.models import User, get_db, get_db_manager
 except ImportError:
     # Fall back to absolute imports (for direct import)
     from app.api.models import (
