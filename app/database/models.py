@@ -146,32 +146,14 @@ class DatabaseManager:
     
     def __init__(self, database_url: str = None):
         if database_url is None:
-            # Auto-detect database URL from environment
+            # Use SQLite by default for simplicity and reliability
+            # PostgreSQL can be enabled by setting DATABASE_URL environment variable
             if os.getenv("DATABASE_URL"):
-                # Use provided PostgreSQL URL (for production/Supabase)
+                # Use provided PostgreSQL URL (for production/Supabase if needed)
                 self.database_url = os.getenv("DATABASE_URL")
                 logger.info(f"Using DATABASE_URL: {self.database_url[:50]}...")
-            elif os.getenv("SUPABASE_URL"):
-                # Construct PostgreSQL URL from Supabase config
-                supabase_url = os.getenv("SUPABASE_URL")
-                # Extract project ref from URL: https://projectref.supabase.co
-                project_ref = supabase_url.replace("https://", "").replace(".supabase.co", "")
-                db_password = os.getenv("SUPABASE_DB_PASSWORD")
-                
-                logger.info(f"Supabase URL: {supabase_url}")
-                logger.info(f"Project ref: {project_ref}")
-                logger.info(f"Password set: {'Yes' if db_password else 'No'}")
-                
-                if not db_password or db_password == "your-db-password":
-                    raise ValueError(
-                        "SUPABASE_DB_PASSWORD environment variable is required for database connection. "
-                        "Please set this in your deployment environment (Render dashboard)."
-                    )
-                
-                self.database_url = f"postgresql://postgres:{db_password}@db.{project_ref}.supabase.co:5432/postgres"
-                logger.info(f"Constructed DB URL: postgresql://postgres:***@db.{project_ref}.supabase.co:5432/postgres")
             else:
-                # Fallback to SQLite for development
+                # Default to SQLite for user database (works everywhere)
                 database_path = os.getenv("DATABASE_PATH", "./users.db") 
                 self.database_url = f"sqlite:///{database_path}"
                 logger.info(f"Using SQLite: {self.database_url}")

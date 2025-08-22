@@ -26,9 +26,11 @@ services:
         generateValue: true  # Render will auto-generate
       - key: JWT_SECRET_KEY
         generateValue: true  # Render will auto-generate
-# Database Configuration (PostgreSQL for user management)
-      - key: DATABASE_URL
-        sync: false  # Set to: postgresql://postgres:YOUR_DB_PASSWORD@db.jzstozvrjjhmwigycjtj.supabase.co:5432/postgres
+# Database Configuration (SQLite for user management - simple and reliable)
+      # DATABASE_URL can be set to use PostgreSQL if needed, otherwise defaults to SQLite
+      # - key: DATABASE_URL
+      #   sync: false  # Optional: postgresql://... if you want PostgreSQL instead of SQLite
+      
       # GCP Configuration for LogSearch (choose one JSON option)
       - key: GOOGLE_CLOUD_PROJECT
         value: octopus-282815
@@ -36,13 +38,12 @@ services:
         sync: false  # Option 1: Set this as JSON string in Render dashboard
       - key: GOOGLE_APPLICATION_CREDENTIALS_JSON  
         sync: false  # Option 2: Alternative JSON env var (if GOOGLE_APPLICATION_CREDENTIALS shows up as full JSON)
-      # Supabase Configuration (for JIRA data and user database)
+      
+      # Supabase Configuration (for JIRA data retrieval - not user database)
       - key: SUPABASE_URL
         value: https://jzstozvrjjhmwigycjtj.supabase.co
       - key: SUPABASE_KEY
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6c3RvenZyampobXdpZ3ljanRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NDY0ODcsImV4cCI6MjA3MDUyMjQ4N30.PqLe_3VJ9idxMdARRa8beciaXPnfQHhYWI7C05yPhMQ
-      - key: SUPABASE_DB_PASSWORD
-        sync: false  # Set your Supabase database password in Render dashboard
       # Web Search API
       - key: TAVILY_API_KEY
         sync: false  # Set in dashboard
