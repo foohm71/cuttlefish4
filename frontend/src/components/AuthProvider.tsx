@@ -53,10 +53,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         window.handleGoogleSignIn = async (response: any) => {
           try {
             console.log('Google sign-in response received:', response);
+            console.log('Credential length:', response.credential?.length);
             await login(response.credential);
             console.log('Login completed successfully');
           } catch (error) {
             console.error('Google sign-in failed:', error);
+            console.error('Error details:', error);
+            alert(`Login failed: ${error.message}`);
             setLoading(false); // Ensure loading stops on error
           }
         };
@@ -88,11 +91,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (googleToken: string) => {
     try {
       console.log('Starting login process...');
+      console.log('Google token received, length:', googleToken?.length);
       setLoading(true);
       
       console.log('Calling authenticateWithGoogle...');
       const authResponse: AuthResponse = await authenticateWithGoogle(googleToken);
       console.log('Auth response received:', authResponse);
+      console.log('User email:', authResponse.user?.email);
       
       setUser(authResponse.user);
       setUsage(authResponse.usage);
