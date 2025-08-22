@@ -28,8 +28,9 @@ services:
         generateValue: true  # Render will auto-generate
 # Database Configuration (SQLite for user management - simple and reliable)
       # DATABASE_URL can be set to use PostgreSQL if needed, otherwise defaults to SQLite
-      # - key: DATABASE_URL
-      #   sync: false  # Optional: postgresql://... if you want PostgreSQL instead of SQLite
+      - key: DATABASE_URL
+        value: /opt/render/project/src/users.db
+      #  sync: false  # Optional: postgresql://... if you want PostgreSQL instead of SQLite
       
       # GCP Configuration for LogSearch (choose one JSON option)
       - key: GOOGLE_CLOUD_PROJECT
