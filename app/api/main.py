@@ -58,7 +58,7 @@ except ImportError:
     from app.api.workflow import MultiAgentWorkflow
     from app.auth.routes import router as auth_router
     from app.auth.middleware import get_current_active_user, log_api_request
-    from app.database.models import User, get_db, db_manager
+    from app.database.models import User, get_db, get_db_manager
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -577,11 +577,12 @@ async def startup_event():
         # Test database connection (don't create tables on startup)
         logger.info("Initializing database connection...")
         if BYPASS_AUTH:
-            logger.info("⚠️  BYPASS_AUTH=true - Running without database authentication")
-            logger.info("✅ Database authentication bypassed")
+            logger.info("⚠️  BYPASS_AUTH=true - Skipping all database operations")
+            logger.info("✅ Database authentication bypassed - no connection test needed")
         else:
             logger.info("Testing database connection...")
             # Just test connection, don't create tables (tables should be created by scripts)
+            db_manager = get_db_manager()  # Lazy load only when needed
             db_manager.test_connection()
             logger.info("✅ Database connection verified")
         

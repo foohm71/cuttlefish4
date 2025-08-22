@@ -222,12 +222,20 @@ class DatabaseManager:
         finally:
             db.close()
 
-# Global database manager instance
-db_manager = DatabaseManager()
+# Global database manager instance (lazy-loaded)
+db_manager = None
+
+def get_db_manager():
+    """Get or create database manager instance."""
+    global db_manager
+    if db_manager is None:
+        db_manager = DatabaseManager()
+    return db_manager
 
 def get_db():
     """Dependency to get database session."""
-    db = db_manager.SessionLocal()
+    manager = get_db_manager()
+    db = manager.SessionLocal()
     try:
         yield db
     finally:
