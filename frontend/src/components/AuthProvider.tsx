@@ -99,8 +99,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setToken(authResponse.access_token);
       
       // Store JWT token in secure cookie
+      const isProduction = window.location.protocol === 'https:';
       Cookies.set('auth_token', authResponse.access_token, { 
-        secure: false, // Set to true in production
+        secure: isProduction, // Secure in production (HTTPS)
         sameSite: 'lax',
         expires: 1 // 1 day
       });
