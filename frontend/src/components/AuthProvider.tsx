@@ -44,25 +44,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize Google Auth and check for existing session
   useEffect(() => {
+    // Set up global callback for Google Sign-In FIRST
+    window.handleGoogleSignIn = async (response: any) => {
+      try {
+        console.log('Google sign-in response received:', response);
+        console.log('Credential length:', response.credential?.length);
+        await login(response.credential);
+        console.log('Login completed successfully');
+      } catch (error) {
+        console.error('Google sign-in failed:', error);
+        console.error('Error details:', error);
+        alert(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
+        setLoading(false); // Ensure loading stops on error
+      }
+    };
+    
     const initAuth = async () => {
       try {
-        // Initialize Google OAuth
+        // Initialize Google OAuth after callback is defined
         await initializeGoogleAuth();
-        
-        // Set up global callback for Google Sign-In
-        window.handleGoogleSignIn = async (response: any) => {
-          try {
-            console.log('Google sign-in response received:', response);
-            console.log('Credential length:', response.credential?.length);
-            await login(response.credential);
-            console.log('Login completed successfully');
-          } catch (error) {
-            console.error('Google sign-in failed:', error);
-            console.error('Error details:', error);
-            alert(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
-            setLoading(false); // Ensure loading stops on error
-          }
-        };
         
         // Check for existing token
         const existingToken = Cookies.get('auth_token');

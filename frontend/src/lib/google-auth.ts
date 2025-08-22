@@ -53,9 +53,12 @@ export function initializeGoogleAuth(): Promise<void> {
           client_id: clientId,
           callback: window.handleGoogleSignIn,
           auto_select: false,
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: false,
+          itp_support: false
         });
         console.log('Google OAuth initialized successfully');
+        console.log('Callback function defined:', typeof window.handleGoogleSignIn);
         resolve();
       } else {
         reject(new Error('Google Identity Services failed to load'));
