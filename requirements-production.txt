@@ -17,6 +17,9 @@ langchain-cohere==0.1.9
 langchain-experimental==0.0.64
 langgraph==0.2.14
 
+# LangSmith tracing
+langsmith>=0.1.0
+
 # OpenAI
 openai>=1.40.6
 

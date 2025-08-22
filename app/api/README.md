@@ -45,6 +45,12 @@ QDRANT_URL=your_qdrant_url_here
 QDRANT_API_KEY=your_qdrant_api_key_here
 QDRANT_COLLECTION=cuttlefish3
 
+# RAG Backend Configuration
+RAG_BACKEND=auto  # Options: 'qdrant', 'supabase', 'auto'
+
+# Search Configuration
+SIMILARITY_THRESHOLD=0.1  # Similarity threshold for vector search (0.0-1.0)
+
 # Application Configuration
 CUTTLEFISH_HOME=/Users/foohm/github/cuttlefish4
 PORT=8000
@@ -83,7 +89,30 @@ The server will start on `http://localhost:8000` with the following endpoints:
 
 ## 🧪 Testing
 
-### 1. Notebook Testing
+### 1. Automated Testing
+
+#### API Testing
+```bash
+# Run the automated API test script
+cd app/api
+python test_api.py
+```
+
+#### Supabase Agents Testing
+```bash
+# Test the new Supabase-based agents
+cd app/agents
+python TestSupabaseAgents.py
+```
+
+#### Backend Switching Testing
+```bash
+# Test the backend switching functionality
+cd app/api
+python test_backend_switching.py
+```
+
+### 2. Notebook Testing
 
 The project includes comprehensive Jupyter notebooks for testing different components:
 
@@ -311,17 +340,34 @@ curl -X POST http://localhost:8000/debug/routing \
 
 ### Database Configuration
 
-The system supports two database backends:
+The system supports two database backends that can be switched using the `RAG_BACKEND` environment variable:
 
-1. **Supabase (Primary)**
-   - PostgreSQL with vector extensions
-   - Used for development and testing
-   - Fallback when Qdrant is unavailable
+#### Backend Options
 
-2. **Qdrant (Optional)**
+1. **`RAG_BACKEND=qdrant`** - Force Qdrant usage
    - High-performance vector database
-   - Used for production deployments
-   - Requires additional configuration
+   - Uses LangChain agents with vectorstore
+   - Requires Qdrant configuration
+
+2. **`RAG_BACKEND=supabase`** - Force Supabase usage
+   - PostgreSQL with vector extensions
+   - Uses Supabase agents with RAG tools
+   - Requires Supabase configuration
+
+3. **`RAG_BACKEND=auto`** (default) - Automatic selection
+   - Uses Qdrant if available and configured
+   - Falls back to Supabase if Qdrant is not available
+   - Provides maximum flexibility
+
+#### Backend Comparison
+
+| Feature | Qdrant Backend | Supabase Backend |
+|---------|----------------|------------------|
+| **Performance** | High-performance vector DB | PostgreSQL with extensions |
+| **Agents** | LangChain agents | Supabase agents |
+| **Retrieval** | Vectorstore-based | RAG tools-based |
+| **Use Case** | Production deployments | Development/testing |
+| **Configuration** | QDRANT_URL, QDRANT_API_KEY | SUPABASE_URL, SUPABASE_KEY |
 
 ## 🐛 Troubleshooting
 

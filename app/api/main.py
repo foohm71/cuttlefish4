@@ -17,6 +17,30 @@ import traceback
 # Authentication bypass flag
 BYPASS_AUTH = os.environ.get('BYPASS_AUTH', 'false').lower() == 'true'
 
+# LangSmith tracing configuration
+def setup_langsmith_tracing():
+    """Setup LangSmith tracing with dynamic project name."""
+    try:
+        api_key = os.environ.get('LANGCHAIN_API_KEY')
+        if api_key:
+            # Generate timestamp-based project name
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            project_name = f"Cuttlefish4 - {timestamp}"
+            
+            # Set LangSmith environment variables
+            os.environ['LANGCHAIN_TRACING_V2'] = 'true'
+            os.environ['LANGCHAIN_PROJECT'] = project_name
+            os.environ['LANGCHAIN_ENDPOINT'] = 'https://api.smith.langchain.com'
+            
+            logger.info(f"✅ LangSmith tracing enabled: Project '{project_name}'")
+            return project_name
+        else:
+            logger.info("⚠️  LangSmith API key not found - tracing disabled")
+            return None
+    except Exception as e:
+        logger.error(f"❌ Failed to setup LangSmith tracing: {e}")
+        return None
+
 
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -573,6 +597,10 @@ async def test_interface():
 async def startup_event():
     """Initialize application on startup."""
     logger.info("🚀 Starting Cuttlefish Multi-Agent RAG API...")
+    
+    # Setup LangSmith tracing
+    langsmith_project = setup_langsmith_tracing()
+    
     try:
         # Test database connection (don't create tables on startup)
         logger.info("Initializing database connection...")

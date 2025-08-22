@@ -47,6 +47,10 @@ services:
       # Web Search API
       - key: TAVILY_API_KEY
         sync: false  # Set in dashboard
+      
+      # LangSmith Tracing (Optional)
+      - key: LANGCHAIN_API_KEY
+        sync: false  # Optional: Set for LangSmith tracing
       # Production settings
       - key: LOG_LEVEL
         value: INFO

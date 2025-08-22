@@ -15,6 +15,13 @@ from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+# LangSmith tracing
+try:
+    from langsmith import traceable
+except ImportError:
+    def traceable(func):
+        return func
+
 # State type definition (shared across all agents)
 class AgentState(TypedDict):
     """State shared between all agents in the graph."""
@@ -44,7 +51,10 @@ class SupervisorAgent:
     def _create_routing_prompt(self):
         """Create the routing decision prompt."""
         return ChatPromptTemplate.from_template("""
-        You are a SUPERVISOR agent for a JIRA ticket retrieval system. Your job is to analyze user queries and route them to the most appropriate retrieval agent.
+        You are a SUPERVISOR agent for a JIRA ticket retrieval system. 
+        Your job is to analyze user queries and route them to the most appropriate retrieval agent. 
+        Route to multiple agents if needed. Review the query to see if you are dealing with an analysis query, a ticket query, or a production incident query. 
+        If it is a analysis query wear the hat of a seasoned software architect. If it is a production incident query wear the hat of a seasoned devops engineer. If it is a ticket query wear the hat of a seasoned JIRA expert.
         
         AVAILABLE AGENTS:
         1. BM25 - Fast keyword-based search, best for:
@@ -66,18 +76,18 @@ class SupervisorAgent:
            - Service status checks (e.g., "GitHub down", "AWS outage")
            - Current outages or downtime queries
            - Recent production incidents needing real-time information
-           - Status page lookups and external service issues
+           - Status page, downdetctor, X, isdown.app etc lookups and external service issues
            - Queries about "latest", "current", or "recent" issues
         
-        5. LogSearch - Splunk Cloud log analysis, best for:
+        5. LogSearch - GCP Cloud log analysis, best for:
            - Production incident log analysis
            - Error pattern investigation (exceptions, timeouts, failures)
-           - Application troubleshooting with log data
+           - Application troubleshooting with log data eg. Exceptions, HTTP 5xx errors 
            - Performance issue diagnosis through logs
            - Certificate expiry, disk space, HTTP errors, dead letter queue issues
         
         ROUTING RULES:
-        - If query mentions service status/outages (down, outage, status) → WebSearch
+        - If query mentions service status/outages (down, outage, status) → WebSearch, LogSearch, ContextualCompression but look for release tickets (eg. PCR-1234)
         - If query contains specific ticket references → BM25
         - If query mentions log analysis, exceptions, errors in production → LogSearch
         - If production_incident=True AND mentions logs, errors, exceptions → LogSearch
@@ -94,6 +104,7 @@ class SupervisorAgent:
         {{"agent": "BM25|ContextualCompression|Ensemble|WebSearch|LogSearch", "reasoning": "brief explanation"}}
         """)
     
+    @traceable(name="SupervisorAgent.route_query")
     def route_query(self, query: str, user_can_wait: bool, production_incident: bool) -> Dict[str, str]:
         """Route query to appropriate agent."""
         try:
@@ -144,6 +155,7 @@ class SupervisorAgent:
             else:
                 return {"agent": "ContextualCompression", "reasoning": "Safe default fallback"}
     
+    @traceable(name="SupervisorAgent.process")
     def process(self, state: AgentState) -> AgentState:
         """Process query and determine routing."""
         start_time = datetime.now()

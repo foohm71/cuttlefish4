@@ -14,6 +14,13 @@ from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+# LangSmith tracing
+try:
+    from langsmith import traceable
+except ImportError:
+    def traceable(func):
+        return func
+
 # Handle both relative and absolute imports for Jupyter compatibility
 try:
     from .common import (
@@ -60,6 +67,7 @@ class ResponseWriterAgent:
         Generate a response that directly answers the user's query:
         """)
     
+    @traceable(name="ResponseWriterAgent.generate_response")
     def generate_response(self, query: str, retrieved_contexts: List[Dict], 
                          production_incident: bool, retrieval_method: str) -> str:
         """Generate contextual response based on retrieved information."""
@@ -89,6 +97,7 @@ class ResponseWriterAgent:
             else:
                 return f"Unable to generate response for query: '{query}'. Please try rephrasing your question or contact support."
     
+    @traceable(name="ResponseWriterAgent.process")
     def process(self, state: AgentState) -> AgentState:
         """Process state and generate final response."""
         start_time = datetime.now()

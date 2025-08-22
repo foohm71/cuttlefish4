@@ -15,6 +15,17 @@ from typing import Dict, List, Any, Optional
 
 from langchain_openai import ChatOpenAI
 
+# LangSmith tracing
+try:
+    from langsmith import traceable
+    from langchain_core.tracers import LangChainTracer
+    LANGSMITH_AVAILABLE = True
+except ImportError:
+    # Fallback decorator when LangSmith not available
+    def traceable(func):
+        return func
+    LANGSMITH_AVAILABLE = False
+
 try:
     # Try relative imports first (for when imported as part of package)
     from ..agents import (
@@ -154,6 +165,7 @@ class MultiAgentWorkflow:
             self.logger.error(f"❌ Failed to initialize agents: {e}")
             raise
     
+    @traceable(name="MultiAgentWorkflow.process_query")
     async def process_query(
         self,
         query: str,
@@ -233,6 +245,7 @@ class MultiAgentWorkflow:
             self.logger.error(f"Query processing failed: {e}")
             raise
     
+    @traceable(name="MultiAgentWorkflow.get_routing_decision") 
     async def get_routing_decision(
         self,
         query: str,
@@ -280,6 +293,7 @@ class MultiAgentWorkflow:
             self.logger.error(f"Routing decision failed: {e}")
             raise
     
+    @traceable(name="MultiAgentWorkflow._route_to_agent")
     async def _route_to_agent(self, state: AgentState) -> AgentState:
         """Route to the appropriate retrieval agent based on supervisor decision."""
         routing_decision = state['routing_decision']
