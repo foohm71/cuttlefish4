@@ -156,10 +156,10 @@ class GCPLogSearchTools:
         )
         return self.search_logs(query)
     
-    def search_recent_errors(self, hours: int = 1, max_results: int = 20) -> List[SearchResult]:
+    def search_recent_errors(self, hours: int = 72, max_results: int = 20) -> List[SearchResult]:
         """Search for recent error logs."""
         # Search for ERROR in message content instead of severity
-        # Use expanded time range to handle timezone issues
+        # Use expanded time range to handle timezone issues and cover more days
         start_time = datetime.now() - timedelta(hours=hours*2)  
         end_time = datetime.now() + timedelta(hours=12)  # Include future timestamps
         
