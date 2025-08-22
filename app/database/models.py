@@ -201,6 +201,19 @@ class DatabaseManager:
         """Create all tables."""
         Base.metadata.create_all(bind=self.engine)
     
+    def test_connection(self):
+        """Test database connection without creating tables."""
+        try:
+            # Just test if we can connect and run a simple query
+            with self.engine.connect() as connection:
+                from sqlalchemy import text
+                result = connection.execute(text("SELECT 1 AS test"))
+                result.fetchone()  # Consume the result
+            logger.info("Database connection test successful")
+        except Exception as e:
+            logger.error(f"Database connection test failed: {e}")
+            raise
+    
     def get_session(self):
         """Get a database session."""
         db = self.SessionLocal()

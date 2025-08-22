@@ -574,15 +574,16 @@ async def startup_event():
     """Initialize application on startup."""
     logger.info("🚀 Starting Cuttlefish Multi-Agent RAG API...")
     try:
-        # Initialize database tables (with connection retry)
+        # Test database connection (don't create tables on startup)
         logger.info("Initializing database connection...")
         if BYPASS_AUTH:
             logger.info("⚠️  BYPASS_AUTH=true - Running without database authentication")
             logger.info("✅ Database authentication bypassed")
         else:
-            logger.info("Connecting to database...")
-            db_manager.create_tables()
-            logger.info("✅ Database ready")
+            logger.info("Testing database connection...")
+            # Just test connection, don't create tables (tables should be created by scripts)
+            db_manager.test_connection()
+            logger.info("✅ Database connection verified")
         
         # Initialize workflow (lazy loading)
         logger.info("API startup complete - workflow will be initialized on first request")
