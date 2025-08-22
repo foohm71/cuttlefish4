@@ -59,7 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } catch (error) {
             console.error('Google sign-in failed:', error);
             console.error('Error details:', error);
-            alert(`Login failed: ${error.message}`);
+            alert(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
             setLoading(false); // Ensure loading stops on error
           }
         };
