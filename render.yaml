@@ -29,7 +29,7 @@ services:
 # Database Configuration (SQLite for user management - simple and reliable)
       # DATABASE_URL can be set to use PostgreSQL if needed, otherwise defaults to SQLite
       - key: DATABASE_URL
-        value: /etc/secrets/users.db
+        value: /opt/render/project/src/scripts/users.db
       #  sync: false  # Optional: postgresql://... if you want PostgreSQL instead of SQLite
       
       # GCP Configuration for LogSearch (choose one JSON option)
