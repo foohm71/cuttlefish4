@@ -54,12 +54,20 @@ class DebugRoutingRequest(BaseModel):
 # Response Models
 
 class RetrievalMetadata(BaseModel):
-    """Metadata about the retrieval process."""
+    """Metadata about the multi-agent retrieval process."""
     
-    agent: str = Field(description="Agent that performed retrieval")
-    num_results: int = Field(description="Number of results retrieved")
-    processing_time: float = Field(description="Processing time in seconds")
-    method_type: str = Field(description="Type of retrieval method used")
+    # Multi-agent execution info
+    agents_executed: List[str] = Field(description="List of agents that were executed")
+    agents_succeeded: List[str] = Field(description="List of agents that succeeded")
+    agents_failed: List[str] = Field(description="List of agents that failed")
+    total_contexts: int = Field(description="Total contexts retrieved across all agents")
+    merge_time: float = Field(description="Time taken to merge results")
+    
+    # Legacy fields for backward compatibility (optional)
+    agent: Optional[str] = Field(None, description="Primary agent (for compatibility)")
+    num_results: Optional[int] = Field(None, description="Number of results (for compatibility)")
+    processing_time: Optional[float] = Field(None, description="Processing time (for compatibility)")
+    method_type: Optional[str] = Field(None, description="Method type (for compatibility)")
     
     # Optional fields for different agent types
     bm25_available: Optional[bool] = Field(None, description="Whether BM25 was available")
@@ -68,6 +76,10 @@ class RetrievalMetadata(BaseModel):
     primary_source: Optional[str] = Field(None, description="Primary source of results")
     source: Optional[str] = Field(None, description="Source type")
     content_filtered: Optional[bool] = Field(None, description="Whether content was filtered")
+    
+    # Per-agent metadata (dynamic fields)
+    class Config:
+        extra = "allow"  # Allow additional fields for per-agent metadata
 
 class RetrievedContext(BaseModel):
     """A retrieved document context."""
@@ -97,14 +109,19 @@ class MultiAgentRAGResponse(BaseModel):
     final_answer: str = Field(description="Generated response")
     relevant_tickets: List[RelevantTicket] = Field(description="Relevant JIRA tickets found")
     
-    # Agent routing information
-    routing_decision: str = Field(description="Which agent was selected")
+    # Multi-agent routing information
+    routing_decisions: List[str] = Field(description="Which agents were selected")
     routing_reasoning: str = Field(description="Reasoning for agent selection")
     
-    # Retrieval information
-    retrieval_method: str = Field(description="Retrieval method used")
-    retrieved_contexts: List[RetrievedContext] = Field(description="Retrieved document contexts")
-    retrieval_metadata: RetrievalMetadata = Field(description="Retrieval process metadata")
+    # Multi-agent retrieval information
+    retrieval_methods: List[str] = Field(description="Retrieval methods used")
+    retrieved_contexts: List[RetrievedContext] = Field(description="Combined retrieved document contexts")
+    agent_results: Dict[str, List[RetrievedContext]] = Field(description="Per-agent results")
+    retrieval_metadata: RetrievalMetadata = Field(description="Multi-agent retrieval process metadata")
+    
+    # Legacy fields for backward compatibility (optional)
+    routing_decision: Optional[str] = Field(None, description="Primary agent (for compatibility)")
+    retrieval_method: Optional[str] = Field(None, description="Primary method (for compatibility)")
     
     # Request parameters
     user_can_wait: bool = Field(description="Whether user could wait")
@@ -123,9 +140,12 @@ class DebugRoutingResponse(BaseModel):
     query: str = Field(description="Original query")
     user_can_wait: bool = Field(description="User can wait parameter")
     production_incident: bool = Field(description="Production incident parameter")
-    routing_decision: str = Field(description="Selected agent")
+    routing_decisions: List[str] = Field(description="Selected agents")
     routing_reasoning: str = Field(description="Reasoning for agent selection")
     timestamp: str = Field(description="Response timestamp")
+    
+    # Legacy field for backward compatibility
+    routing_decision: Optional[str] = Field(None, description="Primary agent (for compatibility)")
 
 class HealthResponse(BaseModel):
     """Response model for the health check endpoint."""

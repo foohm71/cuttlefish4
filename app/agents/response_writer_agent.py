@@ -41,39 +41,54 @@ class ResponseWriterAgent:
     def _create_response_prompt(self):
         """Create the response generation prompt."""
         return ChatPromptTemplate.from_template("""
-        You are a RESPONSE WRITER agent for a JIRA ticket retrieval system. Generate helpful, contextual responses based on retrieved JIRA ticket information.
+        You are a RESPONSE WRITER agent for a JIRA ticket retrieval system. Generate helpful, contextual responses based on MULTI-AGENT retrieved JIRA ticket information.
         
         CONTEXT:
         Query: {query}
         Production Incident: {production_incident}
-        Retrieval Method Used: {retrieval_method}
+        Retrieval Methods Used: {retrieval_methods}
+        Agents Executed: {agents_executed}
         
-        RETRIEVED JIRA TICKETS:
+        MULTI-AGENT RESULTS:
+        {agent_results_summary}
+        
+        COMBINED RETRIEVED CONTEXTS:
         {retrieved_contexts}
         
         INSTRUCTIONS:
-        1. Analyze the user's query and the retrieved JIRA ticket information
-        2. Generate a helpful response that addresses the user's specific question
-        3. If this is a production incident, prioritize urgent/actionable information
-        4. Reference specific JIRA tickets when relevant (use ticket keys like HBASE-123)
-        5. If no relevant information is found, clearly state this
-        6. Keep the response concise but informative
+        1. You have results from multiple specialized agents - synthesize them intelligently
+        2. Prioritize information based on relevance and agent reliability:
+           - LogSearch: Production logs, errors, system issues
+           - WebSearch: Real-time status, external service outages
+           - BM25: Exact ticket matches, specific references
+           - ContextualCompression: Semantic similarity, related issues
+           - Ensemble: Comprehensive coverage, research queries
+        3. For production incidents: prioritize LogSearch and WebSearch results
+        4. Cross-reference information between agents when possible
+        5. If agents provide conflicting information, acknowledge and explain
+        6. Reference specific JIRA tickets with confidence scores when available
+        7. If no relevant information found from any agent, clearly state this
         
         RESPONSE STYLE:
-        - Production Incident: Direct, actionable, prioritize immediate solutions
-        - General Query: Comprehensive, educational, include background context
-        - No Results: Suggest alternative search terms or approaches
+        - Production Incident: Direct, actionable, highlight urgent findings from each agent
+        - General Query: Synthesize comprehensive view from all agents
+        - Conflicting Results: Present multiple perspectives clearly
+        - No Results: Explain which agents were consulted and suggest alternatives
         
-        Generate a response that directly answers the user's query:
+        Generate a response that synthesizes multi-agent findings to answer the user's query:
         """)
     
     @traceable(name="ResponseWriterAgent.generate_response")
     def generate_response(self, query: str, retrieved_contexts: List[Dict], 
-                         production_incident: bool, retrieval_method: str) -> str:
-        """Generate contextual response based on retrieved information."""
+                         production_incident: bool, retrieval_methods: List[str], 
+                         agent_results: Dict[str, List[Dict]], agents_executed: List[str]) -> str:
+        """Generate contextual response based on multi-agent retrieved information."""
         try:
             # Format retrieved contexts for the prompt
             context_text = format_context_for_llm(retrieved_contexts)
+            
+            # Create agent results summary
+            agent_summary = self._create_agent_results_summary(agent_results, agents_executed)
             
             # Create response chain
             response_chain = self.response_prompt | self.response_writer_llm | StrOutputParser()
@@ -82,7 +97,9 @@ class ResponseWriterAgent:
             response = response_chain.invoke({
                 "query": query,
                 "production_incident": production_incident,
-                "retrieval_method": retrieval_method,
+                "retrieval_methods": ", ".join(retrieval_methods) if retrieval_methods else "Unknown",
+                "agents_executed": ", ".join(agents_executed) if agents_executed else "Unknown",
+                "agent_results_summary": agent_summary,
                 "retrieved_contexts": context_text if context_text != "No relevant context found." else "No relevant JIRA tickets found for this query."
             })
             
@@ -97,22 +114,49 @@ class ResponseWriterAgent:
             else:
                 return f"Unable to generate response for query: '{query}'. Please try rephrasing your question or contact support."
     
+    def _create_agent_results_summary(self, agent_results: Dict[str, List[Dict]], agents_executed: List[str]) -> str:
+        """Create a summary of results from each agent."""
+        if not agent_results or not agents_executed:
+            return "No agent results available."
+        
+        summary_lines = []
+        for agent in agents_executed:
+            results = agent_results.get(agent, [])
+            count = len(results)
+            
+            if count > 0:
+                summary_lines.append(f"- {agent}: Found {count} relevant result(s)")
+                # Add brief preview of top result if available
+                if results and 'content' in results[0]:
+                    preview = results[0]['content'][:100] + "..." if len(results[0]['content']) > 100 else results[0]['content']
+                    summary_lines.append(f"  Top result: {preview}")
+            else:
+                summary_lines.append(f"- {agent}: No results found")
+        
+        return "\n".join(summary_lines) if summary_lines else "No agent results available."
+    
     @traceable(name="ResponseWriterAgent.process")
     def process(self, state: AgentState) -> AgentState:
-        """Process state and generate final response."""
+        """Process state and generate final response from multi-agent results."""
         start_time = datetime.now()
         
         query = state['query']
         retrieved_contexts = state.get('retrieved_contexts', [])
         production_incident = state['production_incident']
-        retrieval_method = state.get('retrieval_method', 'Unknown')
+        retrieval_methods = state.get('retrieval_methods', [])
+        agent_results = state.get('agent_results', {})
+        
+        # Extract agents executed from retrieval metadata or agent_results
+        agents_executed = list(agent_results.keys()) if agent_results else []
         
         incident_label = "[PRODUCTION INCIDENT]" if production_incident else ""
-        print(f"✍️  ResponseWriter Agent {incident_label} generating response...")
+        print(f"✍️  ResponseWriter Agent {incident_label} synthesizing multi-agent response...")
+        print(f"   Agents consulted: {', '.join(agents_executed)}")
+        print(f"   Total contexts: {len(retrieved_contexts)}")
         
         # Generate response
         final_answer = self.generate_response(
-            query, retrieved_contexts, production_incident, retrieval_method
+            query, retrieved_contexts, production_incident, retrieval_methods, agent_results, agents_executed
         )
         
         # Extract relevant tickets

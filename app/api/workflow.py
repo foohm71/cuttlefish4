@@ -10,6 +10,7 @@ Integrates all agents and provides the main processing pipeline.
 
 import os
 import logging
+import asyncio
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -199,10 +200,11 @@ class MultiAgentWorkflow:
                 'query': query,
                 'user_can_wait': user_can_wait,
                 'production_incident': production_incident,
-                'routing_decision': None,
+                'routing_decisions': [],
                 'routing_reasoning': None,
+                'agent_results': {},
                 'retrieved_contexts': [],
-                'retrieval_method': None,
+                'retrieval_methods': [],
                 'retrieval_metadata': {},
                 'final_answer': None,
                 'relevant_tickets': [],
@@ -212,8 +214,8 @@ class MultiAgentWorkflow:
             # Step 1: Supervisor routing
             state = self.supervisor_agent.process(initial_state)
             
-            # Step 2: Route to appropriate retrieval agent
-            state = await self._route_to_agent(state)
+            # Step 2: Route to appropriate retrieval agents (parallel execution)
+            state = await self._route_to_agents(state)
             
             # Step 3: Generate final response
             state = self.response_writer_agent.process(state)
@@ -226,16 +228,21 @@ class MultiAgentWorkflow:
                 'query': state['query'],
                 'final_answer': state['final_answer'],
                 'relevant_tickets': state['relevant_tickets'],
-                'routing_decision': state['routing_decision'],
+                'routing_decisions': state['routing_decisions'],
                 'routing_reasoning': state['routing_reasoning'],
-                'retrieval_method': state['retrieval_method'],
+                'retrieval_methods': state['retrieval_methods'],
                 'retrieved_contexts': state['retrieved_contexts'],
+                'agent_results': state['agent_results'],
                 'retrieval_metadata': state['retrieval_metadata'],
                 'user_can_wait': user_can_wait,
                 'production_incident': production_incident,
                 'messages': [{'content': msg.content, 'type': type(msg).__name__} for msg in state['messages']],
                 'timestamp': datetime.now().isoformat(),
-                'total_processing_time': total_time
+                'total_processing_time': total_time,
+                
+                # Legacy compatibility fields
+                'routing_decision': state['routing_decisions'][0] if state['routing_decisions'] else 'Unknown',
+                'retrieval_method': ', '.join(state['retrieval_methods']) if state['retrieval_methods'] else 'Unknown'
             }
             
             self.logger.info(f"Query processed successfully in {total_time:.2f}s")
@@ -271,10 +278,11 @@ class MultiAgentWorkflow:
                 'query': query,
                 'user_can_wait': user_can_wait,
                 'production_incident': production_incident,
-                'routing_decision': None,
+                'routing_decisions': [],
                 'routing_reasoning': None,
+                'agent_results': {},
                 'retrieved_contexts': [],
-                'retrieval_method': None,
+                'retrieval_methods': [],
                 'retrieval_metadata': {},
                 'final_answer': None,
                 'relevant_tickets': [],
@@ -285,58 +293,182 @@ class MultiAgentWorkflow:
             state = self.supervisor_agent.process(state)
             
             return {
-                'routing_decision': state['routing_decision'],
-                'routing_reasoning': state['routing_reasoning']
+                'routing_decisions': state['routing_decisions'],
+                'routing_reasoning': state['routing_reasoning'],
+                # Legacy compatibility field
+                'routing_decision': state['routing_decisions'][0] if state['routing_decisions'] else 'Unknown'
             }
             
         except Exception as e:
             self.logger.error(f"Routing decision failed: {e}")
             raise
     
-    @traceable(name="MultiAgentWorkflow._route_to_agent")
-    async def _route_to_agent(self, state: AgentState) -> AgentState:
-        """Route to the appropriate retrieval agent based on supervisor decision."""
-        routing_decision = state['routing_decision']
+    @traceable(name="MultiAgentWorkflow._route_to_agents")
+    async def _route_to_agents(self, state: AgentState) -> AgentState:
+        """Route to multiple agents in parallel based on supervisor decisions."""
+        routing_decisions = state['routing_decisions']
+        
+        if not routing_decisions:
+            self.logger.warning("No routing decisions found, using default")
+            routing_decisions = ["ContextualCompression"]
         
         try:
-            if routing_decision == 'BM25':
-                if self.bm25_agent:
-                    return self.bm25_agent.process(state)
-                else:
-                    # Fallback to Supabase BM25/keyword search
-                    return await self._supabase_bm25_fallback(state)
+            self.logger.info(f"Executing {len(routing_decisions)} agents in parallel: {routing_decisions}")
             
-            elif routing_decision == 'ContextualCompression':
-                if self.contextual_compression_agent:
-                    return self.contextual_compression_agent.process(state)
-                else:
-                    # Fallback to Supabase vector search
-                    return await self._supabase_vector_fallback(state)
+            # Create tasks for parallel execution
+            tasks = []
+            for agent_name in routing_decisions:
+                task = self._execute_single_agent(agent_name, state)
+                tasks.append(task)
             
-            elif routing_decision == 'Ensemble':
-                if self.ensemble_agent:
-                    return self.ensemble_agent.process(state)
-                else:
-                    # Fallback to Supabase hybrid search
-                    return await self._supabase_hybrid_fallback(state)
+            # Execute all agents in parallel
+            agent_results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            elif routing_decision == 'WebSearch':
-                # Use WebSearch agent for real-time information
-                return self.web_search_agent.process(state)
-            
-            elif routing_decision == 'LogSearch':
-                # Use LogSearch agent for log analysis
-                return self.log_search_agent.process(state)
-            
-            else:
-                # Default fallback
-                self.logger.warning(f"Unknown routing decision: {routing_decision}")
-                return await self._supabase_vector_fallback(state)
+            # Process results and combine
+            return self._merge_agent_results(state, routing_decisions, agent_results)
         
         except Exception as e:
-            self.logger.error(f"Agent routing failed: {e}")
-            # Last resort fallback
-            return await self._supabase_vector_fallback(state)
+            self.logger.error(f"Multi-agent routing failed: {e}")
+            # Fallback to single agent
+            return await self._execute_single_agent("ContextualCompression", state)
+    
+    async def _execute_single_agent(self, agent_name: str, state: AgentState) -> Dict[str, Any]:
+        """Execute a single agent and return its results."""
+        try:
+            # Create a copy of state for this agent
+            agent_state = state.copy()
+            
+            if agent_name == 'BM25':
+                if self.bm25_agent:
+                    result_state = self.bm25_agent.process(agent_state)
+                else:
+                    result_state = await self._supabase_bm25_fallback(agent_state)
+            
+            elif agent_name == 'ContextualCompression':
+                if self.contextual_compression_agent:
+                    result_state = self.contextual_compression_agent.process(agent_state)
+                else:
+                    result_state = await self._supabase_vector_fallback(agent_state)
+            
+            elif agent_name == 'Ensemble':
+                if self.ensemble_agent:
+                    result_state = self.ensemble_agent.process(agent_state)
+                else:
+                    result_state = await self._supabase_hybrid_fallback(agent_state)
+            
+            elif agent_name == 'WebSearch':
+                result_state = self.web_search_agent.process(agent_state)
+            
+            elif agent_name == 'LogSearch':
+                result_state = self.log_search_agent.process(agent_state)
+            
+            else:
+                self.logger.warning(f"Unknown agent: {agent_name}, using fallback")
+                result_state = await self._supabase_vector_fallback(agent_state)
+            
+            return {
+                'agent_name': agent_name,
+                'contexts': result_state['retrieved_contexts'],
+                'method': result_state.get('retrieval_method', agent_name),
+                'metadata': result_state.get('retrieval_metadata', {}),
+                'success': True,
+                'error': None
+            }
+        
+        except Exception as e:
+            self.logger.error(f"Agent {agent_name} failed: {e}")
+            return {
+                'agent_name': agent_name,
+                'contexts': [],
+                'method': f"{agent_name}_Failed",
+                'metadata': {'error': str(e)},
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _merge_agent_results(self, state: AgentState, agent_names: List[str], agent_results: List[Dict[str, Any]]) -> AgentState:
+        """Merge results from multiple agents into the state."""
+        start_time = datetime.now()
+        
+        combined_contexts = []
+        methods_used = []
+        agent_results_dict = {}
+        combined_metadata = {
+            'agents_executed': [],
+            'agents_succeeded': [],
+            'agents_failed': [],
+            'total_contexts': 0,
+            'merge_time': 0
+        }
+        
+        for i, result in enumerate(agent_results):
+            agent_name = agent_names[i] if i < len(agent_names) else f"Agent_{i}"
+            
+            # Handle exceptions from asyncio.gather
+            if isinstance(result, Exception):
+                self.logger.error(f"Agent {agent_name} raised exception: {result}")
+                combined_metadata['agents_failed'].append(agent_name)
+                agent_results_dict[agent_name] = []
+                continue
+            
+            # Process successful results
+            if result['success']:
+                contexts = result['contexts']
+                combined_contexts.extend(contexts)
+                methods_used.append(result['method'])
+                agent_results_dict[agent_name] = contexts
+                combined_metadata['agents_succeeded'].append(agent_name)
+                
+                # Add agent-specific metadata
+                combined_metadata[f'{agent_name}_results'] = len(contexts)
+                combined_metadata[f'{agent_name}_metadata'] = result['metadata']
+            else:
+                combined_metadata['agents_failed'].append(agent_name)
+                agent_results_dict[agent_name] = []
+            
+            combined_metadata['agents_executed'].append(agent_name)
+        
+        # Remove duplicates while preserving order and source
+        unique_contexts = self._deduplicate_contexts(combined_contexts)
+        
+        # Update state with merged results
+        state['retrieved_contexts'] = unique_contexts
+        state['retrieval_methods'] = methods_used
+        state['agent_results'] = agent_results_dict
+        
+        combined_metadata['total_contexts'] = len(unique_contexts)
+        combined_metadata['merge_time'] = measure_performance(start_time)
+        state['retrieval_metadata'] = combined_metadata
+        
+        self.logger.info(f"Merged results from {len(agent_names)} agents: {len(unique_contexts)} unique contexts")
+        return state
+    
+    def _deduplicate_contexts(self, contexts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Remove duplicate contexts while preserving the best scores and source information."""
+        seen_content = {}
+        unique_contexts = []
+        
+        for context in contexts:
+            content = context.get('content', '')
+            content_hash = hash(content.strip())
+            
+            if content_hash not in seen_content:
+                # First time seeing this content
+                seen_content[content_hash] = context
+                unique_contexts.append(context)
+            else:
+                # Duplicate content - keep the one with better score or more metadata
+                existing = seen_content[content_hash]
+                current_score = context.get('score', 0)
+                existing_score = existing.get('score', 0)
+                
+                if current_score > existing_score:
+                    # Replace with better score
+                    idx = unique_contexts.index(existing)
+                    unique_contexts[idx] = context
+                    seen_content[content_hash] = context
+        
+        return unique_contexts
     
     async def _supabase_bm25_fallback(self, state: AgentState) -> AgentState:
         """Fallback to Supabase BM25/keyword search."""
@@ -360,7 +492,6 @@ class MultiAgentWorkflow:
             
             # Update state
             state['retrieved_contexts'] = retrieved_contexts
-            state['retrieval_method'] = 'Supabase_BM25'
             state['retrieval_metadata'] = {
                 'agent': 'Supabase_BM25',
                 'num_results': len(retrieved_contexts),
@@ -400,7 +531,6 @@ class MultiAgentWorkflow:
             
             # Update state
             state['retrieved_contexts'] = retrieved_contexts
-            state['retrieval_method'] = 'Supabase_Vector'
             state['retrieval_metadata'] = {
                 'agent': 'Supabase_Vector',
                 'num_results': len(retrieved_contexts),
@@ -439,7 +569,6 @@ class MultiAgentWorkflow:
             
             # Update state
             state['retrieved_contexts'] = retrieved_contexts
-            state['retrieval_method'] = 'Supabase_Hybrid'
             state['retrieval_metadata'] = {
                 'agent': 'Supabase_Hybrid',
                 'num_results': len(retrieved_contexts),
@@ -460,7 +589,6 @@ class MultiAgentWorkflow:
         start_time = datetime.now()
         
         state['retrieved_contexts'] = []
-        state['retrieval_method'] = method_name
         state['retrieval_metadata'] = {
             'agent': method_name,
             'num_results': 0,

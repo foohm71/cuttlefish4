@@ -28,10 +28,11 @@ class AgentState(TypedDict):
     query: str
     user_can_wait: bool
     production_incident: bool
-    routing_decision: Optional[str]
+    routing_decisions: List[str]  # Changed from single to multiple agents
     routing_reasoning: Optional[str]
-    retrieved_contexts: List[Dict[str, Any]]
-    retrieval_method: Optional[str]
+    agent_results: Dict[str, List[Dict[str, Any]]]  # Per-agent results
+    retrieved_contexts: List[Dict[str, Any]]  # Combined/final contexts
+    retrieval_methods: List[str]  # Multiple methods used
     retrieval_metadata: Dict[str, Any]
     final_answer: Optional[str]
     relevant_tickets: List[Dict[str, str]]
@@ -52,8 +53,8 @@ class SupervisorAgent:
         """Create the routing decision prompt."""
         return ChatPromptTemplate.from_template("""
         You are a SUPERVISOR agent for a JIRA ticket retrieval system. 
-        Your job is to analyze user queries and route them to the most appropriate retrieval agent. 
-        Route to multiple agents if needed. Review the query to see if you are dealing with an analysis query, a ticket query, or a production incident query. 
+        Your job is to analyze user queries and route them to the most appropriate retrieval agents. 
+        You can select multiple agents when it makes sense, especially for production incidents. Review the query to see if you are dealing with an analysis query, a ticket query, or a production incident query. 
         If it is a analysis query wear the hat of a seasoned software architect. If it is a production incident query wear the hat of a seasoned devops engineer. If it is a ticket query wear the hat of a seasoned JIRA expert.
         
         AVAILABLE AGENTS:
@@ -87,21 +88,23 @@ class SupervisorAgent:
            - Certificate expiry, disk space, HTTP errors, dead letter queue issues
         
         ROUTING RULES:
-        - If query mentions service status/outages (down, outage, status) → WebSearch, LogSearch, ContextualCompression but look for release tickets (eg. PCR-1234)
-        - If query contains specific ticket references → BM25
-        - If query mentions log analysis, exceptions, errors in production → LogSearch
-        - If production_incident=True AND mentions logs, errors, exceptions → LogSearch
-        - If user_can_wait=True → Ensemble
-        - If production_incident=True AND mentions external services → WebSearch
-        - If production_incident=True (urgent) → ContextualCompression
-        - Default → ContextualCompression
+        - If query mentions service status/outages (down, outage, status) → ["WebSearch", "LogSearch", "ContextualCompression"] for comprehensive coverage
+        - If query contains specific ticket references → ["BM25"] for exact matching
+        - If query mentions log analysis, exceptions, errors in production → ["LogSearch"] or ["LogSearch", "ContextualCompression"] if also need context
+        - If production_incident=True AND mentions logs, errors, exceptions → ["LogSearch", "ContextualCompression"] for urgent troubleshooting
+        - If user_can_wait=True → ["Ensemble"] for comprehensive results
+        - If production_incident=True AND mentions external services → ["WebSearch", "LogSearch"] for real-time + internal data
+        - If production_incident=True (urgent) → ["ContextualCompression", "LogSearch"] for fast response
+        - Default → ["ContextualCompression"]
         
         QUERY: {query}
         USER_CAN_WAIT: {user_can_wait}
         PRODUCTION_INCIDENT: {production_incident}
         
         Analyze the query and respond with ONLY:
-        {{"agent": "BM25|ContextualCompression|Ensemble|WebSearch|LogSearch", "reasoning": "brief explanation"}}
+        {{"agents": ["Agent1", "Agent2"], "reasoning": "brief explanation"}}
+        
+        Use a single agent for simple queries, multiple agents for complex production incidents or comprehensive analysis.
         """)
     
     @traceable(name="SupervisorAgent.route_query")
@@ -121,39 +124,52 @@ class SupervisorAgent:
             # Parse JSON response
             try:
                 routing_decision = json.loads(response)
-                agent = routing_decision.get("agent", "ContextualCompression")
+                agents = routing_decision.get("agents", ["ContextualCompression"])
                 reasoning = routing_decision.get("reasoning", "Default routing")
+                
+                # Ensure agents is a list
+                if isinstance(agents, str):
+                    agents = [agents]
+                elif not isinstance(agents, list):
+                    agents = ["ContextualCompression"]
+                    
             except json.JSONDecodeError:
                 # Fallback parsing if JSON is malformed
+                agents = []
                 if "WebSearch" in response:
-                    agent = "WebSearch"
-                elif "LogSearch" in response:
-                    agent = "LogSearch"
-                elif "BM25" in response:
-                    agent = "BM25"
-                elif "Ensemble" in response:
-                    agent = "Ensemble"
-                else:
-                    agent = "ContextualCompression"
+                    agents.append("WebSearch")
+                if "LogSearch" in response:
+                    agents.append("LogSearch")
+                if "BM25" in response:
+                    agents.append("BM25")
+                if "Ensemble" in response:
+                    agents.append("Ensemble")
+                if "ContextualCompression" in response:
+                    agents.append("ContextualCompression")
+                
+                if not agents:
+                    agents = ["ContextualCompression"]
                 reasoning = "Parsed from text response"
             
-            # Validate agent choice
+            # Validate agent choices
             valid_agents = ["BM25", "ContextualCompression", "Ensemble", "WebSearch", "LogSearch"]
-            if agent not in valid_agents:
-                agent = "ContextualCompression"
-                reasoning = "Invalid agent, using default"
+            validated_agents = [agent for agent in agents if agent in valid_agents]
             
-            return {"agent": agent, "reasoning": reasoning}
+            if not validated_agents:
+                validated_agents = ["ContextualCompression"]
+                reasoning = "Invalid agents, using default"
+            
+            return {"agents": validated_agents, "reasoning": reasoning}
             
         except Exception as e:
             print(f"⚠️  Routing error: {e}")
             # Safe fallback
             if production_incident:
-                return {"agent": "ContextualCompression", "reasoning": "Emergency fallback for production incident"}
+                return {"agents": ["ContextualCompression", "LogSearch"], "reasoning": "Emergency fallback for production incident"}
             elif user_can_wait:
-                return {"agent": "Ensemble", "reasoning": "Fallback for comprehensive search"}
+                return {"agents": ["Ensemble"], "reasoning": "Fallback for comprehensive search"}
             else:
-                return {"agent": "ContextualCompression", "reasoning": "Safe default fallback"}
+                return {"agents": ["ContextualCompression"], "reasoning": "Safe default fallback"}
     
     @traceable(name="SupervisorAgent.process")
     def process(self, state: AgentState) -> AgentState:
@@ -171,15 +187,20 @@ class SupervisorAgent:
         routing_result = self.route_query(query, user_can_wait, production_incident)
         
         # Update state
-        state['routing_decision'] = routing_result['agent']
+        state['routing_decisions'] = routing_result['agents']
         state['routing_reasoning'] = routing_result['reasoning']
         
+        # Initialize agent_results structure
+        state['agent_results'] = {}
+        state['retrieval_methods'] = []
+        
         # Add processing message
+        agents_str = ", ".join(routing_result['agents'])
         state['messages'].append(AIMessage(
-            content=f"Supervisor routed query to {routing_result['agent']} agent: {routing_result['reasoning']}"
+            content=f"Supervisor routed query to {agents_str} agents: {routing_result['reasoning']}"
         ))
         
-        print(f"✅ Supervisor decision: {routing_result['agent']} - {routing_result['reasoning']}")
+        print(f"✅ Supervisor decision: {agents_str} - {routing_result['reasoning']}")
         print(f"   Analysis time: {measure_performance(start_time):.2f}s")
         
         return state

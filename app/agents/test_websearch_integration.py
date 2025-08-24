@@ -15,34 +15,34 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-def test_websearch_integration(workflow, summary_data):
+async def test_websearch_integration(workflow, summary_data):
     """Test WebSearch integration with full workflow."""
     print("🔗 TESTING: WebSearch Integration")
     print("=" * 50)
     
     integration_results = []
     
-    # Test cases that should route to WebSearch
+    # Test cases that should route to WebSearch (possibly with other agents)
     integration_test_cases = [
         {
             'query': 'Is AWS Lambda service down right now?',
             'production_incident': True,
             'user_can_wait': False,
-            'expected_routing': 'WebSearch',
+            'expected_agents': ['WebSearch', 'LogSearch', 'ContextualCompression'],  # Multi-agent for outages
             'test_type': 'status_check'
         },
         {
             'query': 'GitHub outage status today',
             'production_incident': True,
             'user_can_wait': False,
-            'expected_routing': 'WebSearch',
+            'expected_agents': ['WebSearch', 'LogSearch', 'ContextualCompression'],  # Multi-agent for outages
             'test_type': 'status_check'
         },
         {
             'query': 'Docker Hub service status',
             'production_incident': False,
             'user_can_wait': True,
-            'expected_routing': 'WebSearch',
+            'expected_agents': ['WebSearch'],  # Non-urgent may be single agent
             'test_type': 'service_status'
         }
     ]
@@ -54,19 +54,20 @@ def test_websearch_integration(workflow, summary_data):
             start_time = time.time()
             
             # Test routing decision first
-            routing_result = workflow.get_routing_decision(
+            routing_result = await workflow.get_routing_decision(
                 query=test_case['query'],
                 user_can_wait=test_case['user_can_wait'],
                 production_incident=test_case['production_incident']
             )
             
             routing_time = time.time() - start_time
-            routing_decision = routing_result.get('routing_decision')
+            routing_decisions = routing_result.get('routing_decisions', [])
             
-            print(f"   📍 Routing: {routing_decision} (expected: {test_case['expected_routing']})")
+            print(f"   📍 Routing: {routing_decisions} (expected one of: {test_case['expected_agents']})")
             print(f"   ⏱️  Routing time: {routing_time:.2f}s")
             
-            routing_correct = routing_decision == test_case['expected_routing']
+            # Check if WebSearch is included in routing decisions
+            routing_correct = 'WebSearch' in routing_decisions
             
             if routing_correct:
                 print("   ✅ Routing correct - proceeding with full workflow test")
@@ -74,7 +75,7 @@ def test_websearch_integration(workflow, summary_data):
                 # Test full workflow processing
                 full_start_time = time.time()
                 
-                result = workflow.process_query(
+                result = await workflow.process_query(
                     query=test_case['query'],
                     user_can_wait=test_case['user_can_wait'],
                     production_incident=test_case['production_incident']
@@ -85,12 +86,19 @@ def test_websearch_integration(workflow, summary_data):
                 # Analyze results
                 num_contexts = len(result.get('retrieved_contexts', []))
                 final_answer = result.get('final_answer', '')
-                retrieval_method = result.get('retrieval_method', '')
+                retrieval_methods = result.get('retrieval_methods', [])
+                agent_results = result.get('agent_results', {})
                 
                 print(f"   📊 Retrieved contexts: {num_contexts}")
-                print(f"   🔧 Retrieval method: {retrieval_method}")
+                print(f"   🔧 Retrieval methods: {retrieval_methods}")
+                print(f"   🤖 Agents executed: {list(agent_results.keys())}")
                 print(f"   📝 Answer length: {len(final_answer)} chars")
                 print(f"   ⏱️  Total processing time: {full_processing_time:.2f}s")
+                
+                # Check WebSearch was actually executed
+                websearch_executed = 'WebSearch' in agent_results
+                websearch_results = len(agent_results.get('WebSearch', []))
+                print(f"   🔍 WebSearch executed: {websearch_executed} ({websearch_results} results)")
                 
                 # Quality assessment
                 if num_contexts >= 3 and len(final_answer) > 100 and full_processing_time < 15:
@@ -109,19 +117,22 @@ def test_websearch_integration(workflow, summary_data):
                     'answer_length': len(final_answer),
                     'processing_time': full_processing_time,
                     'status': status,
-                    'retrieval_method': retrieval_method
+                    'retrieval_methods': retrieval_methods,
+                    'websearch_executed': websearch_executed,
+                    'websearch_results': websearch_results,
+                    'agents_executed': list(agent_results.keys())
                 })
                 
                 print(f"   {status}")
                 
             else:
-                print(f"   🟡 Routing incorrect - got {routing_decision}, expected {test_case['expected_routing']}")
+                print(f"   🟡 Routing incorrect - got {routing_decisions}, expected WebSearch in {test_case['expected_agents']}")
                 
                 integration_results.append({
                     'query': test_case['query'],
                     'routing_correct': False,
-                    'routing_decision': routing_decision,
-                    'expected_routing': test_case['expected_routing'],
+                    'routing_decisions': routing_decisions,
+                    'expected_agents': test_case['expected_agents'],
                     'status': "🟡 ROUTING_ISSUE"
                 })
                 
