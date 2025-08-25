@@ -357,7 +357,7 @@ function HomeContent() {
             Cuttlefish 4
           </h1>
           <p className="text-xl text-gray-600">
-            Multi-Agent RAG System for Intelligent JIRA Ticket Retrieval
+            A Multi-Agent RAG System for Software Operations
           </p>
           {user && (
             <p className="text-sm text-green-600 mt-2">
